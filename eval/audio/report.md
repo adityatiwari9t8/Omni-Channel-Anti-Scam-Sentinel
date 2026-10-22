@@ -11,17 +11,22 @@ The evaluation used all `eval`-phase entries in three of the dataset mirror's 24
 | Measure | Result |
 | --- | ---: |
 | Scored utterances | 2,416 (353 bonafide, 2,063 spoof) |
+| Accuracy on scored subset | 93.2% |
 | Balanced accuracy | 89.8% |
 | Spoof recall | 94.6% (95% Wilson CI: 93.5–95.5%) |
 | Bonafide false-positive rate | 15.0% (95% Wilson CI: 11.7–19.1%) |
+| False-negative rate | 5.4% |
 | ROC AUC | 0.963 |
+| PR AUC (stepwise average precision) | 0.992 |
 | Diagnostic EER | 9.1% at threshold 0.879 |
+
+At the unchanged shipped threshold of 0.5, the scored-subset confusion matrix is TN=300, FP=53, FN=112, TP=1,951. The threshold was not selected on these evaluation scores. EER is an evaluation-only diagnostic and is not a deployment threshold. The score file has 61 speakers and no duplicate non-empty audio hashes; rows from the same speakers/attack conditions are still dependent.
 
 The EER threshold is calculated on this evaluation subset and is diagnostic only. It must not be adopted as a deployment threshold without independent calibration and holdout evaluation. Accuracy is also affected by this subset's spoof-heavy class mix.
 
 The Wilson intervals are utterance-level binomial intervals; they do not account for dependence among clips from the same speaker or attack condition and may be too narrow.
 
-Of 18,454 eval utterances in the selected partitions, 15,976 were shorter than the model's required 4.0375-second window. Of the remaining 2,478, 62 were rejected by the speech gate. Thus 353/1,841 bonafide and 2,063/16,613 spoof utterances were scored. These are utterance-file coverage rates and must not be interpreted as live-call coverage; live streams can accumulate consecutive windows.
+Of 18,454 eval utterances in the selected partitions, 15,976 were shorter than the model's required 4.0375-second window. Of the remaining 2,478, 62 were rejected by the speech gate. Thus 353/1,841 bonafide and 2,063/16,613 spoof utterances were scored (13.1% overall coverage of the selected eval rows; 97.5% of window-eligible rows). These are utterance-file coverage rates and must not be interpreted as live-call coverage; live streams can accumulate consecutive windows. Conditional metrics exclude both short files and gate abstentions.
 
 ## What this does and does not validate
 
@@ -40,6 +45,16 @@ python eval/audio/run_asvspoof2021_proxy.py \
 
 The command writes per-utterance scores and a detailed JSON report beside the script. The CSV contains metadata, hashes, and scores, not audio content. The checked-in `asvspoof2021_la_proxy_scores.csv` and `asvspoof2021_la_proxy_report.json` record this run.
 
+Recompute metrics from those saved scores, without re-running inference, using only the Python standard library:
+
+```sh
+python eval/audio/summarize_asvspoof_proxy.py
+```
+
+This writes [`asvspoof2021_la_proxy_recomputed_metrics.json`](asvspoof2021_la_proxy_recomputed_metrics.json). The script checks that CSV eligible/scored counts agree with the source report, excludes rows with zero inference windows, and labels PR AUC as average precision. It does not establish that the original ONNX scoring run can be reproduced without the Parquet shards.
+
 ## Project-owned data
 
 No project-owned labeled voice clips were supplied; `eval/clips/labels/audio-eval.csv` has no labeled rows. To measure performance on the intended use case, collect consented and labeled real/fake call segments, keep speakers and call sources separated between calibration and holdout, and evaluate abstentions/coverage as well as errors. Measure end-to-end behavior separately in the target browser and call platform. Until then, do not describe these proxy results as live-call accuracy.
+
+No training or fine-tuning was performed. The available ASVspoof 2021 rows are evaluation-only and remain held out. The ASVspoof 2019 training/development corpus is not present locally; its registration and dataset terms, plus permission to distribute a resulting model, were not established for this run. See [`training/audio/README.md`](../../training/audio/README.md).
