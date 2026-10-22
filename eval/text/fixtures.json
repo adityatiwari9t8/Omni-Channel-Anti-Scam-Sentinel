@@ -1,0 +1,22 @@
+[
+  {"id":"benign-team","label":"safe","subject":"Team lunch Friday","body":"Let me know if you can join us for lunch after the project review."},
+  {"id":"benign-receipt","label":"safe","subject":"Your receipt","body":"Thanks for your purchase. Your receipt is attached for your records."},
+  {"id":"benign-calendar","label":"safe","subject":"Updated meeting invite","body":"I moved our planning meeting to 2 PM. The calendar invitation has been updated."},
+  {"id":"benign-project","label":"safe","subject":"Project notes","body":"Here are the notes from today's meeting. Please add comments before next week."},
+  {"id":"benign-payroll","label":"safe","subject":"Payroll schedule","body":"The regular payroll date is Friday. Contact HR if you have questions about your payslip."},
+  {"id":"benign-shipping","label":"safe","subject":"Delivery update","body":"Your package is on its way and is expected to arrive tomorrow."},
+  {"id":"benign-school","label":"safe","subject":"School newsletter","body":"This week's newsletter includes the sports schedule and the dates for parent meetings."},
+  {"id":"benign-password","label":"safe","subject":"Password policy reminder","body":"Our annual security training is next month. You can review the policy on the company intranet."},
+  {"id":"benign-bank","label":"safe","subject":"Monthly statement available","body":"Your monthly statement is available in the mobile app. No action is needed if you already reviewed it."},
+  {"id":"benign-vacation","label":"safe","subject":"Vacation coverage","body":"I will be away next week. Please coordinate routine requests with Jordan while I am out."},
+  {"id":"phish-credential","label":"phishing","subject":"URGENT account closure","body":"Verify your password immediately or your account will be closed. Sign in at http://secure-account-check.example.net now."},
+  {"id":"phish-giftcard","label":"phishing","subject":"Invoice attached","body":"Pay with gift cards today and send the codes to me. Keep this confidential and do not call the office."},
+  {"id":"phish-bank","label":"phishing","subject":"Bank security alert","body":"Your account is suspended. Confirm your online banking password at http://bank-login-verify.example.org within 2 hours."},
+  {"id":"phish-payroll","label":"phishing","subject":"Payroll verification required","body":"HR needs your password and full account number today to release the pending payroll correction."},
+  {"id":"phish-prize","label":"phishing","subject":"You won a prize","body":"Claim your free reward now. Pay a small processing fee with cryptocurrency to receive your prize."},
+  {"id":"phish-invoice","label":"phishing","subject":"Overdue invoice action required","body":"Your payment is overdue. Open http://invoice-payment.example.com and enter your card and billing details immediately."},
+  {"id":"phish-mfa","label":"phishing","subject":"MFA reset request","body":"Reply with the one-time code you just received so our security team can prevent account termination."},
+  {"id":"phish-ceo","label":"phishing","subject":"Confidential wire transfer","body":"I need you to wire funds urgently. Do not discuss this with anyone; send the transfer confirmation when complete."},
+  {"id":"phish-delivery","label":"phishing","subject":"Package held","body":"Your parcel is on hold. Pay the redelivery fee and verify your card at http://delivery-payment.example.net."},
+  {"id":"phish-cloud","label":"phishing","subject":"Mailbox storage full","body":"Your mailbox will be disabled unless you verify your sign-in password immediately using this link: http://mailbox-verify.example.org"}
+]

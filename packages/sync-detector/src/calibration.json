@@ -1,0 +1,8 @@
+{
+  "speechRms": 0.01,
+  "rLow": 0.1,
+  "rHigh": 0.5,
+  "windowMs": 8000,
+  "maxLagMs": 400,
+  "status": "initial defaults; no labelled role clips supplied for calibration"
+}

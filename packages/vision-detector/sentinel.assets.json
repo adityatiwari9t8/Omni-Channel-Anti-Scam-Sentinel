@@ -1,0 +1,7 @@
+{
+  "assets": [
+    { "from": "assets", "to": "models/vision", "match": "\\.task$" },
+    { "from": "assets/selftest", "to": "selftest" },
+    { "from": "node_modules:@mediapipe/tasks-vision/wasm", "to": "mediapipe/wasm" }
+  ]
+}

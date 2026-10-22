@@ -1,0 +1,139 @@
+:host {
+  all: initial;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #f1f5f9;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.sentinel-card {
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  width: 280px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sentinel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sentinel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sentinel-badge {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.sentinel-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* State themes */
+.state-clear .dot { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.state-clear .sentinel-status-pill { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+.state-suspicious .dot { background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+.state-suspicious .sentinel-status-pill { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+.state-challenge .dot { background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+.state-challenge .sentinel-status-pill { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+.state-alert .dot { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; animation: sentinel-pulse 1.5s infinite; }
+.state-alert .sentinel-status-pill { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+
+.sentinel-body {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.sentinel-reasons {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.sentinel-challenge-box {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  color: #bfdbfe;
+  font-size: 12px;
+}
+
+.sentinel-challenge-timer {
+  font-size: 11px;
+  font-weight: 700;
+  color: #93c5fd;
+  margin-top: 4px;
+}
+
+.sentinel-alert-banner {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 8px;
+  color: #fecaca;
+  font-weight: 600;
+}
+
+.sentinel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  gap: 6px;
+}
+
+.sentinel-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sentinel-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes sentinel-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.15); }
+}

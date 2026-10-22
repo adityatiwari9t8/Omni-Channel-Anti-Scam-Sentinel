@@ -1,0 +1,6 @@
+{
+  "assets": [
+    { "from": "assets", "to": "models/audio" },
+    { "from": "node_modules:onnxruntime-web/dist", "to": "ort", "match": "\\.(wasm|mjs)$" }
+  ]
+}

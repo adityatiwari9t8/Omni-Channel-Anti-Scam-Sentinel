@@ -1,0 +1,12 @@
+{
+  "name": "@sentinel/vision-detector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@sentinel/contracts": "workspace:*",
+    "@mediapipe/tasks-vision": "1.1.1"
+  }
+}

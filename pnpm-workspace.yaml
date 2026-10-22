@@ -1,0 +1,10 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+# Dependency install scripts: esbuild must run its script; protobufjs (pulled in by onnxruntime-web) does not need to.
+# pnpm 10 reads onlyBuiltDependencies; pnpm 11+ reads allowBuilds (true = allow, false = explicitly skip).
+onlyBuiltDependencies:
+  - esbuild
+allowBuilds:
+  esbuild: true
+  protobufjs: false

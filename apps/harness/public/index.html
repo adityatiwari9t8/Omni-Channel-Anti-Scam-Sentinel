@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Sentinel harness</title>
+  <style>
+    body { font: 14px system-ui, sans-serif; margin: 24px; max-width: 1000px; }
+    button { font: inherit; padding: 6px 12px; margin-right: 8px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left; vertical-align: top; }
+    .ok { color: #0a7d2c; font-weight: 600; } .bad { color: #b00020; font-weight: 600; }
+    #summary { margin-top: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Sentinel harness</h1>
+  <p>Runs the five role modules through the shared contract self-test, in this browser. Modules still showing "(mock)" are the stubs.</p>
+  <button id="run">Run self-test</button>
+  <button id="copy" disabled>Copy results</button>
+  <label><input type="checkbox" id="forcemock" /> force mocks for all modules</label>
+  <div id="summary"></div>
+  <table id="results"><thead><tr><th>Module</th><th>Check</th><th>Result</th><th>Detail</th><th>ms</th></tr></thead><tbody></tbody></table>
+  <script type="module" src="harness.js"></script>
+</body>
+</html>

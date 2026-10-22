@@ -1,0 +1,17 @@
+{
+  "name": "@sentinel/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@sentinel/contracts": "workspace:*",
+    "@sentinel/pipeline": "workspace:*",
+    "@sentinel/arbiter": "workspace:*",
+    "@sentinel/mocks": "workspace:*",
+    "@sentinel/audio-detector": "workspace:*",
+    "@sentinel/text-classifier": "workspace:*",
+    "@sentinel/vision-detector": "workspace:*",
+    "@sentinel/sync-detector": "workspace:*",
+    "@sentinel/challenge-verifier": "workspace:*"
+  }
+}

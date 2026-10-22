@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.zip
+*.tgz
+*.log
+pnpm-lock.yaml
+colab/**/*.ckpt
+colab/**/*.pt
+eval/clips/**/*.mp4
+eval/clips/**/*.wav
+.DS_Store
