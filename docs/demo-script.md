@@ -1,28 +1,28 @@
-# Sentinel Hackathon Demo Script (3 Minutes)
+# Sentinel Demonstration Guide (3 minutes)
 
-### Phase 1: Natural Call Baseline (0:00 – 0:45)
-1. User joins Google Meet or Zoom call with a natural caller.
-2. Click the Sentinel extension icon in Chrome toolbar.
-3. Click **"Start Monitoring"**.
-4. Observe the in-page DOM overlay in the top-right corner:
-   - Green status pill shows **`CLEAR`**.
-   - Reasons indicator reads: `"Call integrity verified"`.
-   - Audio is heard clearly with zero distortion or lag.
+This script demonstrates the implemented software and its evidence limits. It does not promise that a particular caller or clip will trigger an alert.
 
-### Phase 2: Synthetic Voice & Face Injection (0:45 – 1:30)
-1. Fake caller joins or switches to synthesized audio / face-swap media.
-2. Within 3 seconds, the overlay transitions to **`SUSPICIOUS`** (Amber).
-3. Plain-language reason displays: `"Voice score high (0.85) • Lip-sync mismatch (0.78)"`.
+## 0:00–0:40 — Explain the problem and privacy design
 
-### Phase 3: Interactive Liveness Challenge (1:30 – 2:15)
-1. Elevated suspicion triggers the **`CHALLENGE`** state (Blue pulse).
-2. The overlay displays the challenge prompt for the user:
-   - *"Ask the caller to slowly turn their head left, then right."*
-   - Live 12-second countdown timer runs.
-3. The fake caller either fails or exhibits visual boundary artifacts under large head yaw angles.
+1. Introduce Sentinel as a student research prototype for combining voice, face-motion, and liveness signals during browser meetings.
+2. Show `docs/ARCHITECTURE.md` and point out that capture and inference are designed to run in the browser.
+3. Explain that the extension needs tab-capture and meeting-page permissions, and that the local CSP restricts extension-page connections to the extension origin.
 
-### Phase 4: Critical Alert & Privacy Verification (2:15 – 3:00)
-1. Sentinel transitions to **`ALERT`** (Red flashing banner).
-2. A system notification triggers: *"Sentinel Alert: Potential deepfake synthesis detected on call."*
-3. User clicks **"Dismiss"** to verify dismissal cooldown and state recovery.
-4. Open Chrome DevTools → **Network Tab** to prove to judges that **zero requests** were made to external servers throughout the entire demo.
+## 0:40–1:30 — Run the offline self-test
+
+1. Start the harness with `pnpm harness` and open `http://localhost:5173`.
+2. Click **Run self-test**. Show the checks and that inputs include synthetic speech, blank frames, and a bundled test portrait.
+3. Click **Show simulated alert** to display the same overlay component used by the extension. Point out the advisory wording and the **Acknowledge** button. It does not analyze call media.
+4. Explain that passing contract checks confirms module wiring, not accuracy on real deepfakes.
+
+## 1:30–2:15 — Show replay and fusion
+
+1. Open **Replay** and load a local, consented audio/video sample if available.
+2. Show scores and the state timeline. Avoid labeling a clip “real” or “fake” unless it has a defensible ground-truth label.
+3. If no suitable clip is available, describe the replay controls and use the unit-test/state-machine examples rather than inventing a result.
+
+## 2:15–3:00 — Results, limitations, and next steps
+
+1. Present the text evaluation alongside its caveat: it uses an LLM-generated corpus and does not predict real-mail performance.
+2. State that this project has no labeled real/fake audio or video evaluation set; live-call latency, face-swap accuracy, and challenge rates are not yet measured.
+3. Show the next step: collect consented, labeled samples, calibrate thresholds on a separate set, and validate the built extension in Chrome. If showing privacy behavior, capture the Network panel on the final build and report only what was actually observed.

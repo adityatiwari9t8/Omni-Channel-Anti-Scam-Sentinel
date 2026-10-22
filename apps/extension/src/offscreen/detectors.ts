@@ -24,10 +24,11 @@ export interface DetectorSet {
 }
 
 export function buildDetectors(settings: Settings): DetectorSet {
+  const useMock = (module: keyof Settings["useMock"]) => __SENTINEL_DEV__ && settings.useMock[module];
   return {
-    audio: settings.useMock.audio ? mockAudioDetector() : createAudioDetector(),
-    vision: settings.useMock.vision ? mockVisionDetector() : createVisionDetector(),
-    sync: settings.useMock.sync ? mockSyncDetector() : createSyncDetector(),
-    challenge: settings.useMock.challenge ? mockChallengeVerifier() : createChallengeVerifier(),
+    audio: useMock("audio") ? mockAudioDetector() : createAudioDetector(),
+    vision: useMock("vision") ? mockVisionDetector() : createVisionDetector(),
+    sync: useMock("sync") ? mockSyncDetector() : createSyncDetector(),
+    challenge: useMock("challenge") ? mockChallengeVerifier() : createChallengeVerifier(),
   };
 }

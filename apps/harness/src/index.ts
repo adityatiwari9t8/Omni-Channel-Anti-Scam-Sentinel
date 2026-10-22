@@ -1,9 +1,10 @@
-import { runContractSelfTest, type CheckResult, type SelfTestDeps } from "@sentinel/contracts";
+import { runContractSelfTest, type ArbiterOutput, type CheckResult, type SelfTestDeps } from "@sentinel/contracts";
 import { createAudioDetector } from "@sentinel/audio-detector";
 import { createTextClassifier } from "@sentinel/text-classifier";
 import { createVisionDetector } from "@sentinel/vision-detector";
 import { createSyncDetector } from "@sentinel/sync-detector";
 import { createChallengeVerifier } from "@sentinel/challenge-verifier";
+import { SentinelOverlay } from "../../extension/src/content/overlay";
 
 const assetBase = new URL("./", document.baseURI).href;   // the harness is served from the dist folder root
 
@@ -36,6 +37,7 @@ const tbody = document.querySelector("#results tbody")!;
 const summary = document.getElementById("summary")!;
 const copyBtn = document.getElementById("copy") as HTMLButtonElement;
 let last: CheckResult[] = [];
+let previewOverlay: SentinelOverlay | null = null;
 
 function render(results: CheckResult[]) {
   tbody.innerHTML = "";
@@ -68,4 +70,19 @@ async function run() {
 
 document.getElementById("run")!.addEventListener("click", run);
 copyBtn.addEventListener("click", () => navigator.clipboard.writeText(JSON.stringify(last, null, 2)));
+document.getElementById("preview-alert")!.addEventListener("click", () => {
+  if (!previewOverlay) previewOverlay = new SentinelOverlay();
+  const simulatedAlert: ArbiterOutput = {
+    tsMs: Date.now(),
+    state: "ALERT",
+    fusedScore: 0.86,
+    reasons: ["Audio signal flagged for review", "Audio/video timing mismatch"],
+  };
+  previewOverlay.update(simulatedAlert);
+});
+document.getElementById("clear-preview")!.addEventListener("click", () => {
+  previewOverlay?.destroy();
+  previewOverlay = null;
+});
+window.addEventListener("pagehide", () => previewOverlay?.destroy());
 if (new URLSearchParams(location.search).get("auto") === "1") void run();

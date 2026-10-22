@@ -7,185 +7,233 @@ import {
   type Settings,
   type SwState,
 } from "@sentinel/contracts";
+import { isSupportedCallUrl } from "../shared/meeting-url";
+
+type ServiceWorkerReply = { ok: boolean; error?: string };
+
+function sendMessage<T>(message: PopupToSw): Promise<T> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response: T) => {
+      const error = chrome.runtime.lastError;
+      if (error) reject(new Error(error.message));
+      else resolve(response);
+    });
+  });
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 export function PopupApp() {
   const [running, setRunning] = useState(false);
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
+  const [runningTabId, setRunningTabId] = useState<number | null>(null);
   const [isSupportedCall, setIsSupportedCall] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPending, setIsPending] = useState(false);
 
   useEffect(() => {
-    // 1. Fetch current tab
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tab = tabs[0];
-      if (tab?.id) {
-        setActiveTabId(tab.id);
-        const url = tab.url || "";
-        const supported = url.includes("meet.google.com") || url.includes("zoom.us");
-        setIsSupportedCall(supported);
-      }
-    });
+    let isMounted = true;
 
-    // 2. Fetch service worker state
-    chrome.runtime.sendMessage({ v: 1, t: "GET_STATE" } satisfies PopupToSw, (res: SwState) => {
-      if (res) {
-        setRunning(res.running);
-        if (res.settings) {
-          setSettings(res.settings);
-        }
+    void (async () => {
+      try {
+        const [tabs, state] = await Promise.all([
+          chrome.tabs.query({ active: true, currentWindow: true }),
+          sendMessage<SwState>({ v: 1, t: "GET_STATE" }),
+        ]);
+        if (!isMounted) return;
+
+        const tab = tabs[0];
+        const tabId = typeof tab?.id === "number" ? tab.id : null;
+        setActiveTabId(tabId);
+        setIsSupportedCall(isSupportedCallUrl(tab?.url ?? ""));
+        setRunning(state?.running === true);
+        setRunningTabId(typeof state?.tabId === "number" ? state.tabId : null);
+        setSettings(state?.settings ?? DEFAULT_SETTINGS);
+      } catch (error) {
+        if (isMounted) setErrorMsg(`Could not read Sentinel status: ${getErrorMessage(error)}`);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-    });
+    })();
+
+    return () => { isMounted = false; };
   }, []);
 
   const handleToggleRunning = async () => {
+    if (isPending) return;
     setErrorMsg(null);
-    if (!running) {
-      if (!activeTabId) return;
-      chrome.runtime.sendMessage(
-        { v: 1, t: "START", tabId: activeTabId } satisfies PopupToSw,
-        (res) => {
-          if (res?.ok) {
-            setRunning(true);
-          } else {
-            setErrorMsg(res?.error || "Failed to start capture");
-          }
-        },
-      );
-    } else {
-      chrome.runtime.sendMessage({ v: 1, t: "STOP" } satisfies PopupToSw, (res) => {
-        if (res?.ok) {
-          setRunning(false);
-        }
-      });
+    setIsPending(true);
+
+    try {
+      if (!running) {
+        if (activeTabId === null || !isSupportedCall) return;
+        const response = await sendMessage<ServiceWorkerReply>({ v: 1, t: "START", tabId: activeTabId });
+        if (!response?.ok) throw new Error(response?.error || "Could not start monitoring.");
+        setRunning(true);
+        setRunningTabId(activeTabId);
+      } else {
+        const response = await sendMessage<ServiceWorkerReply>({ v: 1, t: "STOP" });
+        if (!response?.ok) throw new Error(response?.error || "Could not stop monitoring.");
+        setRunning(false);
+        setRunningTabId(null);
+      }
+    } catch (error) {
+      setErrorMsg(getErrorMessage(error));
+      if (!running) setRunning(false);
+    } finally {
+      setIsPending(false);
     }
   };
 
-  const updateSettings = (partial: Partial<Settings>) => {
+  const updateSettings = async (partial: Partial<Settings>) => {
+    const previous = settings;
     const updated = { ...settings, ...partial };
     setSettings(updated);
-    chrome.runtime.sendMessage({
-      v: 1,
-      t: "SET_SETTINGS",
-      settings: updated,
-    } satisfies PopupToSw);
+    setErrorMsg(null);
+    try {
+      const response = await sendMessage<ServiceWorkerReply>({ v: 1, t: "SET_SETTINGS", settings: updated });
+      if (!response?.ok) throw new Error(response?.error || "Could not save settings.");
+    } catch (error) {
+      setSettings(previous);
+      setErrorMsg(`Settings were not saved: ${getErrorMessage(error)}`);
+    }
   };
 
-  const updateMock = (key: keyof Settings["useMock"], val: boolean) => {
-    const updatedMocks = { ...settings.useMock, [key]: val };
-    updateSettings({ useMock: updatedMocks });
+  const updateMock = (key: keyof Settings["useMock"], value: boolean) => {
+    void updateSettings({ useMock: { ...settings.useMock, [key]: value } });
   };
+
+  const monitoringThisTab = running && runningTabId === activeTabId;
+  const statusTitle = isLoading
+    ? "Checking active tab"
+    : running
+      ? monitoringThisTab ? "Monitoring this tab" : "Monitoring another tab"
+      : isSupportedCall ? "Ready for a call" : "Standby";
+  const statusDetail = isLoading
+    ? "Reading the active page and monitor state."
+    : running
+      ? monitoringThisTab ? "Call media is being analyzed on this device." : "Sentinel is active in a different tab."
+      : isSupportedCall
+        ? "Start monitoring when you are ready."
+        : "Open a Google Meet or Zoom Web call to begin.";
+  const buttonLabel = isLoading
+    ? "Checking active tab…"
+    : isPending
+      ? running ? "Stopping monitoring…" : "Starting on-device analysis…"
+      : running
+        ? "Stop monitoring"
+        : isSupportedCall ? "Start on this call" : "Open Meet or Zoom to start";
 
   return (
-    <div className="popup-container">
-      <div className="popup-header">
-        <div className="logo-group">
-          <div className="logo-icon">S</div>
-          <span className="logo-text">Sentinel</span>
+    <main className="popup-container">
+      <header className="popup-header">
+        <div className="brand-lockup">
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.7 20 6v5.2c0 5.1-3.4 8.3-8 10.1-4.6-1.8-8-5-8-10.1V6l8-3.3Z"/><path d="m8.6 12.1 2.2 2.2 4.7-4.8"/></svg>
+          </span>
+          <span className="brand-copy"><strong>Sentinel</strong><small>CALL INTEGRITY</small></span>
         </div>
         <span className="version-pill">v0.1.0</span>
-      </div>
+      </header>
 
-      <div className="status-card">
-        <div className="status-left">
-          <div className={`status-dot ${running ? "active" : ""}`} />
-          <span className="status-text">{running ? "Monitoring Live Call" : "Standby"}</span>
+      <section className={`status-card ${running ? "is-running" : ""}`} aria-live="polite" aria-atomic="true">
+        <span className={`status-dot ${running ? "active" : ""} ${isPending ? "pending" : ""}`} aria-hidden="true" />
+        <div className="status-copy">
+          <strong>{statusTitle}</strong>
+          <span>{statusDetail}</span>
         </div>
-      </div>
+      </section>
 
       <button
         className={`main-btn ${running ? "stop" : "start"}`}
-        disabled={!running && !isSupportedCall}
-        onClick={handleToggleRunning}
+        disabled={isLoading || isPending || (!running && (!isSupportedCall || activeTabId === null))}
+        onClick={() => void handleToggleRunning()}
+        aria-describedby="monitor-help"
       >
-        {running ? "Stop Monitoring" : isSupportedCall ? "Start Monitoring" : "Join Meet or Zoom to Start"}
+        {buttonLabel}
       </button>
+      <p className="monitor-help" id="monitor-help">
+        {running ? "Stop at any time from this menu." : "Sentinel only starts after you choose this button."}
+      </p>
 
-      {errorMsg && <div style={{ color: "#ef4444", fontSize: 11 }}>{errorMsg}</div>}
+      {errorMsg && <div className="error-message" role="alert">{errorMsg}</div>}
 
-      <div className="settings-section">
-        <div className="section-label">Detection Settings</div>
+      <section className="settings-section" aria-labelledby="settings-title">
+        <div className="section-heading">
+          <h2 id="settings-title">Detection settings</h2>
+          <span>LOCAL</span>
+        </div>
         <div className="settings-box">
           <div className="setting-row">
-            <span>Sensitivity</span>
+            <label htmlFor="sensitivity">Sensitivity</label>
             <select
+              id="sensitivity"
               value={settings.sensitivity}
-              onChange={(e) => updateSettings({ sensitivity: e.target.value as Sensitivity })}
+              onChange={(event) => void updateSettings({ sensitivity: event.target.value as Sensitivity })}
+              disabled={isLoading}
             >
-              <option value="low">Low (Conservative)</option>
-              <option value="medium">Medium (Standard)</option>
-              <option value="high">High (Strict)</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
             </select>
           </div>
 
-          <div className="setting-row">
-            <span>System Notifications</span>
-            <label className="toggle-switch">
+          <label className="setting-row setting-toggle" htmlFor="notifications">
+            <span>System notifications</span>
+            <span className="toggle-switch">
               <input
+                id="notifications"
                 type="checkbox"
                 checked={settings.notifications}
-                onChange={(e) => updateSettings({ notifications: e.target.checked })}
+                onChange={(event) => void updateSettings({ notifications: event.target.checked })}
+                disabled={isLoading}
               />
-              <span className="slider" />
-            </label>
-          </div>
+              <span className="slider" aria-hidden="true" />
+            </span>
+          </label>
 
-          <div className="setting-row">
-            <span>Alert Sounds</span>
-            <label className="toggle-switch">
+          <label className="setting-row setting-toggle" htmlFor="sound">
+            <span>Alert sounds</span>
+            <span className="toggle-switch">
               <input
+                id="sound"
                 type="checkbox"
                 checked={settings.sound}
-                onChange={(e) => updateSettings({ sound: e.target.checked })}
+                onChange={(event) => void updateSettings({ sound: event.target.checked })}
+                disabled={isLoading}
               />
-              <span className="slider" />
-            </label>
-          </div>
+              <span className="slider" aria-hidden="true" />
+            </span>
+          </label>
         </div>
-      </div>
+      </section>
 
-      <details>
-        <summary>Debug & Fallback Mocks</summary>
+      {__SENTINEL_DEV__ && <details className="debug-settings">
+        <summary>Debug and fallback mocks</summary>
         <div className="mock-group">
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.useMock.audio}
-              onChange={(e) => updateMock("audio", e.target.checked)}
-            />{" "}
-            Mock Audio Detector
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.useMock.vision}
-              onChange={(e) => updateMock("vision", e.target.checked)}
-            />{" "}
-            Mock Vision Detector
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.useMock.sync}
-              onChange={(e) => updateMock("sync", e.target.checked)}
-            />{" "}
-            Mock Sync Detector
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={settings.useMock.challenge}
-              onChange={(e) => updateMock("challenge", e.target.checked)}
-            />{" "}
-            Mock Challenge Verifier
-          </label>
+          {(["audio", "vision", "sync", "challenge"] as const).map((key) => (
+            <label key={key}>
+              <input
+                type="checkbox"
+                checked={settings.useMock[key]}
+                onChange={(event) => updateMock(key, event.target.checked)}
+              />
+              Use mock {key} module
+            </label>
+          ))}
         </div>
-      </details>
+      </details>}
 
-      <div className="privacy-notice">
-        🔒 Audio and video streams are processed completely on your device. Zero data ever leaves your computer.
-      </div>
-    </div>
+      <footer className="privacy-notice">
+        <span className="privacy-mark" aria-hidden="true">●</span>
+        <p>Call media is analyzed on this device. Sentinel does not upload call media.</p>
+      </footer>
+      <p className="prototype-note">Prototype signals are advisory; CLEAR does not verify who is on the call.</p>
+    </main>
   );
 }
 

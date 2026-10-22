@@ -12,6 +12,19 @@ export interface FusionOutput {
   reasons: string[];
 }
 
+// Inference can lag by a few seconds on CPU, but old scores must not remain
+// authoritative when capture stops. Future timestamps are tolerated briefly
+// for small clock/transfer skew between extension contexts.
+const MAX_AUDIO_AGE_MS = 8_000;
+const MAX_SYNC_AGE_MS = 4_000;
+const MAX_FRAME_AGE_MS = 2_000;
+const MAX_FUTURE_SKEW_MS = 5_000;
+const isFresh = (ts: number, now: number, maxAge: number): boolean => {
+  const age = now - ts;
+  return Number.isFinite(ts) && age >= -MAX_FUTURE_SKEW_MS && age <= maxAge;
+};
+const isUnitScore = (x: number): boolean => Number.isFinite(x) && x >= 0 && x <= 1;
+
 export function computeFusion(
   audio: AudioResult | null,
   sync: SyncResult | null,
@@ -25,7 +38,9 @@ export function computeFusion(
   const reasons: string[] = [];
 
   // Audio component
-  if (audio && Number.isFinite(audio.scoreFake) && Number.isFinite(audio.confidence) && audio.confidence > 0) {
+  const audioFresh = Boolean(audio && isFresh(audio.windowEndMs, nowMs, MAX_AUDIO_AGE_MS));
+  if (audio && !audioFresh) reasons.push("Audio signal is stale");
+  if (audio && audioFresh && isUnitScore(audio.scoreFake) && isUnitScore(audio.confidence) && audio.confidence > 0) {
     const effW = cfg.wAudio * audio.confidence;
     weightedSum += effW * audio.scoreFake;
     weightSum += effW;
@@ -37,7 +52,9 @@ export function computeFusion(
   }
 
   // Audio-visual sync component
-  if (sync && Number.isFinite(sync.scoreFake) && Number.isFinite(sync.confidence) && sync.confidence > 0) {
+  const syncFresh = Boolean(sync && isFresh(sync.tsMs, nowMs, MAX_SYNC_AGE_MS));
+  if (sync && !syncFresh) reasons.push("Audio/video sync signal is stale");
+  if (sync && syncFresh && isUnitScore(sync.scoreFake) && isUnitScore(sync.confidence) && sync.confidence > 0) {
     const effW = cfg.wSync * sync.confidence;
     weightedSum += effW * sync.scoreFake;
     weightSum += effW;
@@ -48,8 +65,22 @@ export function computeFusion(
     }
   }
 
+  // Experimental pretrained frame classifier. Confidence is a conservative fusion weight,
+  // not a calibrated probability that the classification is correct.
+  const frameFresh = Boolean(frame && isFresh(frame.tsMs, nowMs, MAX_FRAME_AGE_MS));
+  if (frame && !frameFresh) reasons.push("Video signal is stale");
+  if (frame && frameFresh && frame.deepfakeAvailable === false) reasons.push("Visual classifier unavailable");
+  if (frame && frameFresh && isUnitScore(frame.deepfakeScore!) && isUnitScore(frame.deepfakeConfidence!) && frame.deepfakeConfidence! > 0) {
+    const effW = cfg.wVision * frame.deepfakeConfidence!;
+    weightedSum += effW * frame.deepfakeScore!;
+    weightSum += effW;
+    if (frame.deepfakeScore! >= 0.5) {
+      reasons.push(`Visual classifier risk (${frame.deepfakeScore!.toFixed(2)})`);
+    }
+  }
+
   // Frame landmark quality / occlusion observations
-  if (frame) {
+  if (frame && frameFresh) {
     if (!frame.faceFound) {
       reasons.push("No face detected in video");
     } else if (frame.faceOccluded) {

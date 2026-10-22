@@ -1,7 +1,9 @@
 {
   "assets": [
     { "from": "assets", "to": "models/vision", "match": "\\.task$" },
+    { "from": "assets/deepfake/community-forensics-vit.onnx", "to": "models/vision/community-forensics-vit.onnx" },
     { "from": "assets/selftest", "to": "selftest" },
-    { "from": "node_modules:@mediapipe/tasks-vision/wasm", "to": "mediapipe/wasm" }
+    { "from": "node_modules:@mediapipe/tasks-vision/wasm", "to": "mediapipe/wasm" },
+    { "from": "node_modules:onnxruntime-web/dist", "to": "ort", "match": "^ort-wasm-simd-threaded\\.asyncify\\.(wasm|mjs)$" }
   ]
 }

@@ -17,7 +17,7 @@ export interface SelfTestDeps {
 }
 export interface SelfTestEnv {
   assetBase: string;
-  /** A real face photo (from the vision package assets). Mocks ignore it. */
+  /** A face image fixture (synthetic fixtures are suitable for smoke tests only). Mocks ignore it. */
   loadTestFace(): Promise<ImageBitmap>;
   /** A black frame, for example 320x180. */
   loadBlankFrame(): Promise<ImageBitmap>;
@@ -93,21 +93,36 @@ export async function runContractSelfTest(d: SelfTestDeps, env: SelfTestEnv): Pr
     const r = await d.vision.processFrame(await env.loadBlankFrame(), nowMs());
     assert(r.faceFound === false, "faceFound must be false on a blank frame");
     assert(r.mouthAperture === 0, "mouthAperture must be 0 when no face is found");
+    assert(r.deepfakeAvailable === true, "frame classifier unavailable; check the ONNX model/runtime assets");
   });
   await check(out, "vision", "test face: face found, values in range", async () => {
+    if (d.vision.isMock) return "skipped (mock)";
     const face = await env.loadTestFace();
     const lat: number[] = [];
-    let r = await d.vision.processFrame(face, nowMs());
-    for (let i = 0; i < 20; i++) {
-      r = await d.vision.processFrame(face, nowMs() + (i + 1) * 100);
-      lat.push(r.latencyMs);
+    try {
+      let r = await d.vision.processFrame(face, nowMs());
+      for (let i = 0; i < 20; i++) {
+        r = await d.vision.processFrame(face, nowMs() + (i + 1) * 100);
+        lat.push(r.latencyMs);
+      }
+      assert(r.faceFound, "no face found in the test image (is assets/selftest/face.jpg present and clear?)");
+      assert(Number.isFinite(r.mouthAperture) && r.mouthAperture >= 0 && r.mouthAperture <= 1, `mouthAperture out of range: ${r.mouthAperture}`);
+      const hp = r.headPose;
+      assert([hp.yawDeg, hp.pitchDeg, hp.rollDeg].every(Number.isFinite), "head pose angles must be finite");
+      assert(in01(r.landmarkQuality), `landmarkQuality out of range: ${r.landmarkQuality}`);
+
+      // Wait for the asynchronous frame classifier and verify that it produces a bounded score.
+      const deadline = performance.now() + 20000;
+      while (r.deepfakeScore === undefined && performance.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        r = await d.vision.processFrame(face, nowMs());
+      }
+      assert(r.deepfakeScore !== undefined, "frame classifier did not return a score within 20 s");
+      assert(in01(r.deepfakeScore), `deepfakeScore out of range: ${r.deepfakeScore}`);
+      return `median landmark latency ${median(lat).toFixed(1)} ms; classifier smoke score ${r.deepfakeScore.toFixed(3)} (not an accuracy result)`;
+    } finally {
+      face.close();
     }
-    assert(r.faceFound, "no face found in the test image (is assets/selftest/face.jpg present and clear?)");
-    assert(Number.isFinite(r.mouthAperture) && r.mouthAperture >= 0 && r.mouthAperture <= 1, `mouthAperture out of range: ${r.mouthAperture}`);
-    const hp = r.headPose;
-    assert([hp.yawDeg, hp.pitchDeg, hp.rollDeg].every(Number.isFinite), "head pose angles must be finite");
-    assert(in01(r.landmarkQuality), `landmarkQuality out of range: ${r.landmarkQuality}`);
-    return `median latency ${median(lat).toFixed(1)} ms`;
   });
   await check(out, "vision", "dispose() twice does not throw", async () => { d.vision.dispose(); d.vision.dispose(); });
 

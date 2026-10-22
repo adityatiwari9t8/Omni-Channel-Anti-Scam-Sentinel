@@ -1,6 +1,6 @@
 # MASTER DOC (v2): Omni-Channel Anti-Scam Sentinel
 
-This is the single source of truth. **If a role doc disagrees with this doc, this doc wins.** Version 2 replaces the earlier master and the solo-builder spec.
+This is the original v2 integration blueprint used during project assembly. It preserves the role workflow, intended architecture, and starter snippets, some of which are historical and may differ from the current implementation. For current commands, implementation details, limitations, and validation results, use the root `README.md`, `docs/ARCHITECTURE.md`, and `docs/validation-report.md`.
 
 The goal of v2: each of the three people can generate their own part (with an AI tool or by hand) from this doc plus their role doc, and then **the three folders are copied together into one repo and build with no edits.** Everything that makes that work (folder names, exported function names, file formats, message formats, build rules, tests) is defined here.
 

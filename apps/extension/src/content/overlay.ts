@@ -1,114 +1,134 @@
 import type { ArbiterOutput, ChallengeType } from "@sentinel/contracts";
 import overlayCss from "./overlay.inline.css";
+import { getOverlayPresentation } from "./overlay-view";
 
 export class SentinelOverlay {
   private host: HTMLElement;
-  private shadow: ShadowRoot;
   private card: HTMLElement;
-  private statusPill: HTMLElement;
   private statusText: HTMLElement;
+  private summaryEl: HTMLElement;
   private reasonsEl: HTMLElement;
   private challengeBox: HTMLElement;
   private challengePrompt: HTMLElement;
   private challengeTimer: HTMLElement;
   private alertBanner: HTMLElement;
+  private acknowledgeButton: HTMLButtonElement;
 
-  private onDismissCallback?: () => void;
+  private onAcknowledge?: () => void;
   private timerInterval?: number;
+  private latestOutput: ArbiterOutput | null = null;
+  private acknowledged = false;
+  private lastState: ArbiterOutput["state"] | null = null;
 
-  constructor(onDismiss?: () => void) {
-    this.onDismissCallback = onDismiss;
+  constructor(onAcknowledge?: () => void) {
+    this.onAcknowledge = onAcknowledge;
 
     this.host = document.createElement("div");
     this.host.id = "sentinel-extension-overlay-root";
-    this.shadow = this.host.attachShadow({ mode: "closed" });
+    const shadow = this.host.attachShadow({ mode: "closed" });
 
     const style = document.createElement("style");
     style.textContent = overlayCss;
-    this.shadow.appendChild(style);
+    shadow.appendChild(style);
 
     this.card = document.createElement("div");
-    this.card.className = "sentinel-card state-clear";
+    this.card.className = "sentinel-card state-no-data";
+    this.card.setAttribute("role", "region");
+    this.card.setAttribute("aria-label", "Sentinel call integrity status");
 
     this.card.innerHTML = `
-      <div class="sentinel-header">
-        <div class="sentinel-title-row">
-          <span class="sentinel-badge">Sentinel Shield</span>
+      <header class="sentinel-header">
+        <div class="sentinel-brand">
+          <span class="sentinel-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><path d="M12 2.7 20 6v5.2c0 5.1-3.4 8.3-8 10.1-4.6-1.8-8-5-8-10.1V6l8-3.3Z"/><path d="m8.6 12.1 2.2 2.2 4.7-4.8"/></svg>
+          </span>
+          <span class="sentinel-brand-name">Sentinel</span>
         </div>
-        <div class="sentinel-status-pill">
-          <span class="dot"></span>
-          <span class="status-label">CLEAR</span>
+        <div class="sentinel-status-pill" aria-live="polite" aria-atomic="true">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="status-label">NO DATA</span>
         </div>
-      </div>
+      </header>
       <div class="sentinel-body">
-        <div class="sentinel-reasons">Analyzing call streams...</div>
-        <div class="sentinel-challenge-box" style="display: none;">
+        <p class="sentinel-summary">Waiting for fresh call signals.</p>
+        <div class="sentinel-evidence-label">Signals</div>
+        <p class="sentinel-reasons">Not enough data</p>
+        <div class="sentinel-challenge-box" hidden>
+          <div class="sentinel-challenge-title">Liveness prompt</div>
           <div class="challenge-prompt"></div>
-          <div class="sentinel-challenge-timer"></div>
+          <div class="sentinel-challenge-timer" role="timer" aria-live="off"></div>
         </div>
-        <div class="sentinel-alert-banner" style="display: none;">
-          ⚠️ High probability of synthetic deepfake media on call.
+        <div class="sentinel-alert-banner" role="alert" aria-live="assertive" hidden>
+          <span class="sentinel-warning-icon" aria-hidden="true">!</span>
+          <div>
+            <strong>Possible synthetic-media or liveness concerns detected.</strong>
+            <span> Treat this as an advisory signal, not proof. Verify the caller through a trusted channel.</span>
+          </div>
         </div>
       </div>
-      <div class="sentinel-actions">
-        <button class="sentinel-btn dismiss-btn">Dismiss</button>
-      </div>
+      <footer class="sentinel-footer">
+        <span class="sentinel-disclaimer">A risk signal cannot verify identity.</span>
+        <button class="sentinel-btn acknowledge-btn" type="button" hidden>Acknowledge</button>
+      </footer>
     `;
 
-    this.shadow.appendChild(this.card);
+    shadow.appendChild(this.card);
     document.body.appendChild(this.host);
 
-    this.statusPill = this.card.querySelector(".sentinel-status-pill")!;
-    this.statusText = this.card.querySelector(".status-label")!;
-    this.reasonsEl = this.card.querySelector(".sentinel-reasons")!;
-    this.challengeBox = this.card.querySelector(".sentinel-challenge-box")!;
-    this.challengePrompt = this.card.querySelector(".challenge-prompt")!;
-    this.challengeTimer = this.card.querySelector(".sentinel-challenge-timer")!;
-    this.alertBanner = this.card.querySelector(".sentinel-alert-banner")!;
+    this.statusText = this.card.querySelector<HTMLElement>(".status-label")!;
+    this.summaryEl = this.card.querySelector<HTMLElement>(".sentinel-summary")!;
+    this.reasonsEl = this.card.querySelector<HTMLElement>(".sentinel-reasons")!;
+    this.challengeBox = this.card.querySelector<HTMLElement>(".sentinel-challenge-box")!;
+    this.challengePrompt = this.card.querySelector<HTMLElement>(".challenge-prompt")!;
+    this.challengeTimer = this.card.querySelector<HTMLElement>(".sentinel-challenge-timer")!;
+    this.alertBanner = this.card.querySelector<HTMLElement>(".sentinel-alert-banner")!;
+    this.acknowledgeButton = this.card.querySelector<HTMLButtonElement>(".acknowledge-btn")!;
 
-    const dismissBtn = this.card.querySelector(".dismiss-btn") as HTMLButtonElement;
-    dismissBtn.addEventListener("click", () => {
-      this.onDismissCallback?.();
+    this.acknowledgeButton.addEventListener("click", () => {
+      this.acknowledged = true;
+      if (this.latestOutput) this.render(this.latestOutput);
+      this.onAcknowledge?.();
     });
   }
 
   public update(out: ArbiterOutput): void {
-    const state = out.state.toLowerCase();
-    this.card.className = `sentinel-card state-${state}`;
-    this.statusText.textContent = out.state;
-
-    if (out.reasons && out.reasons.length > 0) {
-      this.reasonsEl.textContent = out.reasons.join(" • ");
-    } else {
-      this.reasonsEl.textContent = "Call integrity verified.";
+    if (this.acknowledged && out.state === "ALERT" && this.lastState !== "ALERT") {
+      this.acknowledged = false;
     }
+    this.lastState = out.state;
+    this.latestOutput = out;
+    this.render(out);
+  }
 
-    if (out.state === "ALERT") {
-      this.alertBanner.style.display = "block";
-    } else {
-      this.alertBanner.style.display = "none";
-    }
+  private render(out: ArbiterOutput): void {
+    const view = getOverlayPresentation(out, this.acknowledged);
+    this.card.className = `sentinel-card ${view.className}`;
+    this.statusText.textContent = view.status;
+    this.summaryEl.textContent = view.summary;
+    this.reasonsEl.textContent = view.reasons;
+    this.alertBanner.hidden = !view.showAlert;
+    this.acknowledgeButton.hidden = !view.showAcknowledge;
+    this.challengeBox.hidden = !view.showChallenge;
 
-    if (out.state !== "CHALLENGE") {
-      this.challengeBox.style.display = "none";
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = undefined;
-      }
+    if (!view.showChallenge && this.timerInterval !== undefined) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = undefined;
     }
   }
 
   public showChallenge(challenge: ChallengeType, prompt: string, deadlineMs: number): void {
-    this.challengeBox.style.display = "block";
+    this.challengeBox.hidden = false;
+    this.challengeBox.dataset.challenge = challenge;
     this.challengePrompt.textContent = prompt;
 
-    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.timerInterval !== undefined) clearInterval(this.timerInterval);
 
     const updateTimer = () => {
       const remainingSec = Math.max(0, Math.ceil((deadlineMs - (performance.timeOrigin + performance.now())) / 1000));
       this.challengeTimer.textContent = `Time remaining: ${remainingSec}s`;
-      if (remainingSec <= 0 && this.timerInterval) {
+      if (remainingSec <= 0 && this.timerInterval !== undefined) {
         clearInterval(this.timerInterval);
+        this.timerInterval = undefined;
       }
     };
 
@@ -117,7 +137,7 @@ export class SentinelOverlay {
   }
 
   public destroy(): void {
-    if (this.timerInterval) clearInterval(this.timerInterval);
+    if (this.timerInterval !== undefined) clearInterval(this.timerInterval);
     this.host.remove();
   }
 }

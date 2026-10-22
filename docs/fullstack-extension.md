@@ -112,7 +112,7 @@ Every decision writes a JSONL line: timestamp, inputs, fused score, state, reaso
 - **In-page overlay** injected into the Meet tab (use a shadow root so Meet's CSS cannot break it): traffic-light status, one-line reason, and the challenge prompt when needed.
 - **High-risk alert:** a prominent modal-style banner. Optionally a system notification (`chrome.notifications`) and a short sound.
 - **Toolbar popup (React):** Start / Stop, sensitivity setting, a plain "no data leaves your device" note, and a link to the decision log.
-- Never block Meet's call controls or cover the video tiles. Keep the overlay draggable or collapsible.
+- Never block Meet's call controls or cover the video tiles. The current overlay is fixed-position; making it draggable or collapsible remains a possible UX improvement.
 - Accessible: do not rely on colour alone, include text labels.
 
 ## 6. Gmail banner

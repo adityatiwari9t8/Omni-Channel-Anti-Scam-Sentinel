@@ -1,103 +1,71 @@
-# Sentinel: Omni-Channel Anti-Scam Shield
+# Sentinel — Omni-Channel Anti-Scam Prototype
 
-An entirely on-device Chrome extension that inspects live video calls (**Google Meet** and **Zoom Web**) and protects users from deepfake audio, face-swap video clones, and social engineering fraud.
+Sentinel is a research prototype for privacy-conscious scam and synthetic-media risk signals in browser meetings. It combines an AASIST audio anti-spoofing model, MediaPipe face landmarks, an experimental pretrained frame-level synthetic-image classifier, audio-to-mouth-motion correlation, scripted liveness checks, and a rule-based arbiter in a Chrome extension and offline browser harness.
 
-All inference runs inside the browser sandbox using **ONNX Runtime Web (WASM)** and **MediaPipe**. No audio, video, or sensitive data ever leaves your computer.
+**Project status:** this prototype includes build, type, integration, privacy, and unit-check commands. Live-call behavior and detector accuracy have not been validated on a labeled, consented dataset. Do not treat `CLEAR` as proof that a caller is genuine; `NO DATA` means the extension has no fresh evidence to assess.
 
----
+## What is implemented
 
-## 🚀 Key Features
+- Chrome Manifest V3 extension with Meet and Zoom Web content scripts, an offscreen capture/inference page, popup controls, and an in-page overlay.
+- Pretrained AASIST inference through ONNX Runtime Web, MediaPipe face/hand landmarks, and an experimental frame-level synthetic-image classifier. The extension prefers WebGPU when available and falls back to CPU/WASM. Model and runtime assets are copied into the extension bundle at build time.
+- Audio/visual signal fusion, a state machine, interactive challenge checks, and a phishing-text classifier package.
+- Gmail content script that locally checks opened messages and displays a risk banner. Gmail selectors are site-dependent and need confirmation in the target account.
+- Offline self-test and media replay harness under `apps/harness`, including a simulated preview of the production in-call alert overlay.
+- Privacy guardrails: source scan plus same-origin connection policy for extension pages and harness pages.
 
-- **Multi-Modal Deepfake Detection**:
-  - **Audio Anti-Spoofing**: Inspects speech frequency characteristics using AASIST neural graphs running on ONNX Runtime Web.
-  - **Facial Landmark & Pose Tracking**: Extracts 468+ 3D facial landmarks and head pose using MediaPipe Vision.
-  - **Audio-Visual Lip-Sync Correlation**: Computes Pearson correlation between speech audio energy (RMS) and inner-lip aperture over a sliding window.
-- **Dynamic Arbiter & State Machine**:
-  - Multi-sensor fusion engine with exponential moving average (EMA) smoothing and hysteresis prevention.
-  - 4 distinct operational states: `CLEAR` (Nominal), `SUSPICIOUS` (Elevated risk), `CHALLENGE` (Interactive caller verification), and `ALERT` (Critical deepfake detection).
-- **Interactive Liveness Challenges**:
-  - Prompts the user to request unexpected movements from the caller (e.g. head yaw sweeps, face occlusions) that break real-time generative models.
-- **Non-Intrusive In-Page Overlay**:
-  - Injected via isolated **Shadow DOM** into Google Meet and Zoom tabs. Displays traffic-light status, plain-language reasoning, and countdown timers without obstructing meeting controls.
-- **100% Privacy Preserving**:
-  - Zero server telemetry, zero third-party API dependencies, zero remote network egress. Enforced by automated build-time static checks.
+The Gmail content script extracts the open message in the page and runs the bundled classifier locally; Gmail selectors can change and should be verified in the target account. The frame classifier scores individual face crops, not whole videos, and has not been evaluated or calibrated on this project's live-call data. It is an experimental risk signal, not proof of a deepfake. Challenges check simple movements and do not verify identity. The audio model is slow on CPU and has known domain-shift limitations. The bundled frame model is about 87 MB (83 MiB); include it when copying or submitting the project.
 
----
+## Requirements
 
-## 👥 Architecture & Team Roles
+- Node.js 20.11 or newer
+- pnpm 10 or newer
+- Chrome 116 or newer for the extension
 
-The Sentinel system is partitioned into three cleanly separated roles unified through shared contracts (`@sentinel/contracts`):
+## Install, verify, and build
 
-| Role | Member | Focus Areas & Packages |
-|---|---|---|
-| **Audio Module** | **Utkarsh** | Audio deepfake detection (`packages/audio-detector`), phishing text classifier (`packages/text-classifier`), model cards, training notebooks. |
-| **Vision Module** | **Yash** | Facial computer vision (`packages/vision-detector`), audio-visual sync (`packages/sync-detector`), interactive challenge verifier (`packages/challenge-verifier`). |
-| **Full-Stack Integration** | **Aditya** | Full-stack extension architecture (`apps/extension`), multi-signal arbiter (`packages/arbiter`), capture pipeline (`packages/pipeline`), offline harness (`apps/harness`), root configs & integration. |
-
----
-
-## 🛠️ Quick Start & Installation
-
-### Prerequisites
-- **Node.js**: v20.11 or newer (tested on Node v26.11)
-- **pnpm**: v10+ (tested on pnpm v12.6)
-- **Google Chrome**: v116 or newer
-
-### Setup & Build
-
-```bash
-# 1. Clone repository
-git clone https://github.com/adityatiwari9t8/sentinal.git
-cd sentinal
-
-# 2. Install workspace dependencies
-pnpm install
-
-# 3. Run verification test suite (unit tests, integration checks, privacy validation)
+```sh
+pnpm install --frozen-lockfile
 pnpm verify
-
-# 4. Build extension bundle
 pnpm build
 ```
 
-The compiled Chrome extension is produced in: `apps/extension/dist`.
+`pnpm verify` runs integration and privacy checks, TypeScript type checking, unit tests, and an extension build. The build output is `apps/extension/dist/`. Load that directory from `chrome://extensions` with Developer mode enabled; Chrome requires Developer mode to remain on for an unpacked extension. The normal build uses real detectors; scripted mock controls are available only in development/watch builds.
 
----
+Run the offline harness with:
 
-## 📦 Loading the Extension into Chrome
-
-1. Open Chrome and navigate to `chrome://extensions`.
-2. Toggle on **"Developer mode"** in the top-right corner.
-3. Click **"Load unpacked"**.
-4. Select the `apps/extension/dist` folder in this repository.
-5. Open [Google Meet](https://meet.google.com) or [Zoom Web](https://app.zoom.us).
-6. Click the Sentinel toolbar icon and press **"Start Monitoring"**.
-
----
-
-## 🧪 Local Offline Replay & Self-Test Harness
-
-You can test and tune Sentinel completely offline without starting an active meeting:
-
-```bash
-# Start local test harness server
+```sh
 pnpm harness
 ```
-Then open [http://localhost:5173](http://localhost:5173):
-- **Self-Test (`/index.html`)**: Runs all 5 detector modules against synthetic and benchmark fixtures to verify contract compliance and inference latencies.
-- **Replay Harness (`/replay.html`)**: Allows loading any `.mp4` or `.wav` file, adjusting live fusion weights, observing score trajectories, and downloading JSONL decision logs.
 
----
+Open `http://localhost:5173`, run the self-test, preview the simulated alert, or choose **Open replay harness** to load local media. The notification preview uses the production overlay component but feeds it sample results. Harness self-tests validate module contracts and wiring; they do not measure real-world detection accuracy.
 
-## 📊 Measured Performance & Limitations
+## Evaluation and evidence
 
-- **Vision Latency**: ~18 ms per frame on browser WASM (supports steady 10 fps sampling).
-- **Audio Inference**: ~1.5 s per 4-second hop with AASIST ONNX. Handled asynchronously via a non-blocking drop-queue in the pipeline.
-- **Transport Overhead**: Remote video canvas encoding (JPEG quality 0.7) and base64 transfer to the offscreen worker completes in < 4 ms.
-- **Current Limitations**: Lip-sync correlation requires sustained speech (~3 seconds) to establish statistical confidence. Brief consonant closures (e.g. "P" / "B") are below word-level resolution at 10 fps.
+- The text model's reported 99.73% accuracy is from a random holdout within an LLM-generated English email corpus. It is not a real-world performance estimate. A 20-message hand-authored smoke set yielded 85% binary accuracy (with `suspicious` counted as positive).
+- No project-owned, labeled real/fake voice or video clips are included. Audio/vision accuracy, sync thresholds, challenge success rates, and live-call latency therefore remain unmeasured for this project.
+- See [evaluation reports](eval/), [model cards](packages/), [architecture](docs/ARCHITECTURE.md), [the demo guide](docs/demo-script.md), and the [security and bypass review](docs/security-review.md) for methods, limitations, and next steps.
 
----
+## Privacy and permissions
 
-## 📄 License
+The design processes captured call media locally. The extension and harness CSP restrict connection destinations to their own origin, including for SDK-initiated metric requests. The build-time privacy script scans project source code; it does not inspect bundled third-party dependencies, so the CSP is an additional runtime control. Browser Network-panel verification remains a recommended submission check. The extension requests tab capture and access to supported meeting pages; explain these permissions before asking anyone to install it.
 
-MIT License. See individual package asset folders for upstream model licenses (AASIST: MIT, MediaPipe: Apache-2.0).
+## Repository map
+
+- `apps/extension/` — Chrome extension source and manifest
+- `apps/harness/` — offline self-test and media replay UI
+- `packages/` — contracts, detectors, fusion, and pipeline
+- `eval/` — evaluation scripts, fixtures, and reports
+- `colab/` — model exploration/export notebooks
+- `docs/` — architecture, model notes, limitations, and demo guide
+
+## Team contributions
+
+| Area | Owner | Main paths |
+|---|---|---|
+| Audio and text | Utkarsh | `packages/audio-detector`, `packages/text-classifier`, `colab/audio`, `colab/text`, `eval/audio`, `eval/text` |
+| Vision and synchronization | Yash | `packages/vision-detector`, `packages/sync-detector`, `packages/challenge-verifier`, `colab/vision`, `eval/vision` |
+| Integration | Aditya | `apps/`, `packages/contracts`, `packages/arbiter`, `packages/pipeline`, `packages/mocks`, scripts, and root configuration |
+
+## License
+
+The project code is MIT licensed. Individual model and dependency terms are documented in their respective model cards and asset folders; verify model redistribution terms before publishing a redistributed build.

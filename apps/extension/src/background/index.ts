@@ -1,11 +1,27 @@
 import type { PopupToSw, Settings, SwState } from "@sentinel/contracts";
 import { loadSettings, saveSettings } from "../shared/settings";
+import { isSupportedCallUrl } from "../shared/meeting-url";
 
 let currentTabId: number | null = null;
 let isMonitoring = false;
+let operationGeneration = 0;
+let creatingOffscreen: Promise<void> | null = null;
 
 async function getState(): Promise<SwState> {
   const settings = await loadSettings();
+  const stored = await chrome.storage.session.get(["running", "tabId"]);
+  const contexts = await chrome.runtime.getContexts({
+    contextTypes: ["OFFSCREEN_DOCUMENT" as any],
+    documentUrls: [chrome.runtime.getURL("offscreen.html")],
+  });
+  if (stored.running === true && typeof stored.tabId === "number" && contexts.length > 0) {
+    isMonitoring = true;
+    currentTabId = stored.tabId;
+  } else {
+    isMonitoring = false;
+    currentTabId = null;
+    await chrome.storage.session.set({ running: false, tabId: null });
+  }
   return {
     running: isMonitoring,
     tabId: currentTabId,
@@ -14,16 +30,21 @@ async function getState(): Promise<SwState> {
 }
 
 async function ensureOffscreen(): Promise<void> {
-  const contexts = await chrome.runtime.getContexts({
-    contextTypes: ["OFFSCREEN_DOCUMENT" as any],
-  });
-  if (contexts.length > 0) return;
-
-  await chrome.offscreen.createDocument({
-    url: "offscreen.html",
-    reasons: ["USER_MEDIA", "AUDIO_PLAYBACK"] as any,
-    justification: "Analyze call audio and video entirely on-device and route playback to speakers.",
-  });
+  if (creatingOffscreen) return creatingOffscreen;
+  creatingOffscreen = (async () => {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: ["OFFSCREEN_DOCUMENT" as any],
+      documentUrls: [chrome.runtime.getURL("offscreen.html")],
+    });
+    if (contexts.length > 0) return;
+    await chrome.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["USER_MEDIA", "AUDIO_PLAYBACK"] as any,
+      justification: "Analyze call audio and video entirely on-device and route playback to speakers.",
+    });
+  })();
+  try { await creatingOffscreen; }
+  finally { creatingOffscreen = null; }
 }
 
 async function closeOffscreen(): Promise<void> {
@@ -36,35 +57,53 @@ async function closeOffscreen(): Promise<void> {
 }
 
 async function start(tabId: number): Promise<void> {
-  const settings = await loadSettings();
-  const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
-
-  await ensureOffscreen();
-
-  currentTabId = tabId;
-  isMonitoring = true;
-
-  // Send start to offscreen
-  await chrome.runtime.sendMessage({
-    v: 1,
-    target: "offscreen",
-    t: "OFFSCREEN_START",
-    streamId,
-    settings,
-  });
-
-  // Notify content script on the tab
-  try {
-    await chrome.tabs.sendMessage(tabId, { v: 1, t: "MEET_START", settings });
-  } catch (err) {
-    console.warn("[background] Tab message failed (script may load later):", err);
+  const tab = await chrome.tabs.get(tabId);
+  if (!isSupportedCallUrl(tab.url ?? "")) {
+    throw new Error("Open a Google Meet or Zoom Web call tab before starting Sentinel.");
   }
 
-  // Persist session state
-  await chrome.storage.session.set({ running: true, tabId });
+  const generation = ++operationGeneration;
+  try {
+    const [settings] = await Promise.all([loadSettings(), ensureOffscreen()]);
+    if (generation !== operationGeneration) {
+      if (operationGeneration === generation + 1 && !isMonitoring) await closeOffscreen();
+      return;
+    }
+    const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+    if (generation !== operationGeneration) return;
+
+    const started = await chrome.runtime.sendMessage({
+      v: 1,
+      target: "offscreen",
+      t: "OFFSCREEN_START",
+      streamId,
+      settings,
+    });
+    if (generation !== operationGeneration) return;
+    if (!started?.ok) throw new Error(started?.error || "The inference engine did not start.");
+
+    currentTabId = tabId;
+    isMonitoring = true;
+    await chrome.storage.session.set({ running: true, tabId });
+    try {
+      await chrome.tabs.sendMessage(tabId, { v: 1, t: "MEET_START", settings });
+    } catch (err) {
+      console.warn("[background] Tab message failed (script may load later):", err);
+    }
+  } catch (error) {
+    if (generation === operationGeneration) {
+      isMonitoring = false;
+      currentTabId = null;
+      try { await chrome.runtime.sendMessage({ v: 1, target: "offscreen", t: "OFFSCREEN_STOP" }); } catch { /* context may not exist */ }
+      await closeOffscreen();
+      await chrome.storage.session.set({ running: false, tabId: null });
+    }
+    throw error;
+  }
 }
 
 async function stop(): Promise<void> {
+  operationGeneration++;
   isMonitoring = false;
   const tabId = currentTabId;
   currentTabId = null;
@@ -100,8 +139,8 @@ chrome.runtime.onMessage.addListener((msg: any, _sender, sendResponse) => {
     chrome.notifications.create({
       type: "basic",
       iconUrl: "icons/icon-128.png",
-      title: "Sentinel Alert: Suspicious Call Detected",
-      message: msg.reason || "Potential deepfake synthesis detected on call.",
+      title: "Sentinel advisory: review call signals",
+      message: msg.reason || "Possible synthetic-media signals. Verify through a trusted channel.",
       priority: 2,
     });
     return;
@@ -154,9 +193,7 @@ chrome.tabs.onRemoved.addListener((closedTabId) => {
 
 chrome.tabs.onUpdated.addListener((updatedTabId, changeInfo) => {
   if (updatedTabId === currentTabId && changeInfo.url) {
-    const isMeetingUrl =
-      changeInfo.url.includes("meet.google.com") || changeInfo.url.includes("zoom.us");
-    if (!isMeetingUrl) {
+    if (!isSupportedCallUrl(changeInfo.url)) {
       void stop();
     }
   }

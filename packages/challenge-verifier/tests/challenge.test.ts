@@ -29,7 +29,7 @@ describe("ChallengeVerifier", () => {
   });
   it("supports fingers with hand tracking and cancel clears state", () => {
     const v = createChallengeVerifier(); v.start("raise_fingers", 0);
-    for (let i = 0; i <= 11; i++) v.pushFrame(makeFrame(i * 100, { handNearFace: true }));
+    for (let i = 0; i <= 11; i++) v.pushFrame(makeFrame(i * 100, { handNearFace: true, raisedFingers: 3 }));
     expect(v.poll()?.state).toBe("passed");
     v.cancel(); expect(v.poll()).toBeNull();
   });

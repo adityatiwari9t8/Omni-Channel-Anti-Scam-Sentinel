@@ -2,8 +2,11 @@
   "manifest_version": 3,
   "name": "Sentinel: Deepfake & Scam Shield",
   "version": "0.1.0",
-  "description": "On-device AI shield protecting Google Meet and Zoom calls against deepfake video and audio synthesis.",
+  "description": "Experimental on-device call integrity signals for Google Meet and Zoom Web.",
   "minimum_chrome_version": "116",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self';"
+  },
   "permissions": ["tabCapture", "offscreen", "activeTab", "storage", "notifications"],
   "host_permissions": [
     "https://meet.google.com/*",

@@ -44,7 +44,8 @@ Steps:
    fixtures from @sentinel/contracts; write your vitest tests to run those same scenarios.
 6. After each package run: pnpm vitest run packages/<name> and then pnpm verify:parts. Fix failures before moving on.
 7. When done: node scripts/check-ownership.mjs 2 must pass. Pack the handover with the Vision Module command in master doc 18.4.
-8. Print the FINAL REPORT (master doc 17.3). In section 6 list the human steps: add assets/selftest/face.jpg, open the
+8. Print the FINAL REPORT (master doc 17.3). In section 6 list the human steps: add a synthetic portrait to
+   assets/selftest/face.jpg for a smoke test (or use a consenting participant's image for a real-camera check), open the
    harness in Chrome and run the self-test (pnpm harness) to check the real MediaPipe code, make real and fake clips,
    calibrate the sync thresholds on them, send the tarball to Aditya (Full-Stack Integration).
 ```
@@ -298,16 +299,16 @@ Tests: synthetic correlated signals give a low `scoreFake`; independent noise gi
 **Baseline:** during the 2 s before `start`, the verifier keeps a rolling mean of `landmarkQuality` for frames with `|yaw| < 10` as `Q0`. If there is no baseline yet, use 0.8.
 
 ### `turn_head_left_right`
-- Track yaw. `passed` when yaw reached **at least +25° and at most -25°** (either order) within the time limit, with the face found for at least 70% of the frames.
+- Track yaw. The current implementation requires three consecutive samples on each side (at least +25° and at most -25°), with the face found for at least 70% of challenge frames. Gaps over 500 ms break a run.
 - `artifactScore = clamp((Q0 - Qbig) / 0.4, 0, 1)` where `Qbig` is the mean `landmarkQuality` over frames with `|yaw| >= 20°`. Add a second term for the largest jump in mouth aperture or in face-center position between consecutive frames at large yaw relative to the baseline; take the maximum of the two terms.
 - `evidence`: for example `"yaw reached +38 and -41 degrees; landmark quality fell from 0.82 to 0.35"`.
 
 ### `cover_half_face`
-- `passed` when `faceOccluded` (or hand coverage above 0.35) holds for at least **0.8 s** and the face is found again afterwards.
+- `passed` when `faceOccluded` (or hand coverage above 0.35) holds continuously for at least **0.8 s** and the face is found again afterwards. Gaps over 500 ms break the observed cover interval.
 - Starting heuristic for `artifactScore`: a real hand in front of a real face reduces landmark quality and moves landmarks; a face-swap overlay often keeps rendering the face on top of the hand or glitches at its edge. Use two terms: `qualityStaysHigh` (mean quality during occlusion stays above 0.8 while coverage is above 0.5) and `edgeJitter` (jitter spike at the moment coverage crosses 0.35, relative to baseline). `artifactScore = max` of both terms. **Calibrate on real people and on your fakes; this is experimental and `docs/vision-module/HANDOVER.md` must say how reliable it was.**
 
 ### `raise_fingers` (optional, only if the hand landmarker works)
-- `passed` when a hand is near the face (`handNearFace`) for at least 1 s. `artifactScore` computed like `cover_half_face`. If you skip this challenge, `start("raise_fingers")` immediately returns a `failed` status with evidence `"not supported"`, and **tell Full-Stack Integration** so the arbiter skips it.
+- The current implementation requires a hand near the face with at least three estimated extended fingers for at least 0.8 s and six observed samples; gaps over 500 ms break a run. Landmark geometry is heuristic and this check is not secure identity verification.
 
 `cancel()` clears the active challenge. `evidence` is always a short plain sentence.
 
@@ -377,7 +378,7 @@ curl -L -o packages/vision-detector/assets/face_landmarker.task \
 curl -L -o packages/vision-detector/assets/hand_landmarker.task \
   https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
 ```
-Verify the URLs and licences in the current MediaPipe documentation. Add a clear, well-lit photo of a team member who agreed as `assets/selftest/face.jpg`.
+Verify the URLs and licences in the current MediaPipe documentation. Use a synthetic portrait as `assets/selftest/face.jpg` for a code smoke test; use a clear, well-lit photo of a team member only with consent for real-camera validation. Never use either fixture as labeled accuracy data.
 
 ## C3. Browser setup skeleton (`src/landmarker.ts`)
 ```ts

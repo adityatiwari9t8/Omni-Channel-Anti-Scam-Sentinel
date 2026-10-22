@@ -3,7 +3,6 @@ dist/
 *.zip
 *.tgz
 *.log
-pnpm-lock.yaml
 colab/**/*.ckpt
 colab/**/*.pt
 eval/clips/**/*.mp4

@@ -9,6 +9,7 @@ export interface ThresholdSet {
 export interface ArbiterConfig {
   wAudio: number;
   wSync: number;
+  wVision: number;
   minEvidence: number;
   emaTauMs: number;
   thresholds: Record<Sensitivity, ThresholdSet>;
@@ -24,6 +25,7 @@ export interface ArbiterConfig {
 export const DEFAULT_ARBITER_CONFIG: ArbiterConfig = {
   wAudio: 0.5,
   wSync: 0.5,
+  wVision: 0.35,
   minEvidence: 0.2,
   emaTauMs: 4000,
   thresholds: {

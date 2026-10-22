@@ -13,8 +13,8 @@
 - **Output Specification:**
   - Node Name: `logits`
   - Shape: `[1, 2]` (Index 0: Spoof/Synthetic probability, Index 1: Bonafide natural speech)
-- **Runtime Backend:** ONNX Runtime Web (`onnxruntime-web` v1.23.2), executing on WASM single-thread CPU.
-- **Latency Benchmark:** ~1500 ms median per 4-second hop on Apple Silicon M-series.
+- **Runtime Backend:** ONNX Runtime Web (`onnxruntime-web` v1.23.2). The extension requests WebGPU and falls back to single-thread WASM; the browser harness defaults to WASM.
+- **Latency Evidence:** The audio model card records about 1.53 s median inference per 4-second window in its synthetic browser-harness run. This is a runtime measurement, not a live-call benchmark.
 - **Limitations:** Trained primarily on ASVspoof 2019 logical access; generalization to modern zero-shot diffusion voice cloners requires active threshold tuning on real-world codecs.
 
 ---
@@ -29,8 +29,15 @@
   - `mouthAperture`: Normalized vertical inner-lip distance relative to total facial height.
   - `headPose`: 3-axis rotation (Yaw, Pitch, Roll in degrees) computed via Perspective-n-Point (PnP) geometry over canonical facial anchor points.
   - `landmarkQuality`: Confidence score derived from landmark presence score and structural variance.
-- **Runtime Backend:** `@mediapipe/tasks-vision` v1.1.1 running on WASM with SIMD acceleration.
-- **Latency Benchmark:** 18.4 ms median per frame (comfortably sustains 10 fps real-time processing).
+- **Runtime Backend:** `@mediapipe/tasks-vision` v1.1.1; the extension requests GPU and falls back to CPU. The backend used in a live browser demo has not been recorded.
+
+## Experimental frame-level synthetic-image classifier
+
+- **Model:** CommunityForensics-DeepfakeDet-ViT ONNX, revision `0b8f9cb` of [`buildborderless/CommunityForensics-DeepfakeDet-ViT`](https://huggingface.co/buildborderless/CommunityForensics-DeepfakeDet-ViT).
+- **License:** MIT, per the model repository. The model is bundled locally at `packages/vision-detector/assets/deepfake/community-forensics-vit.onnx` (87,442,080 bytes; about 83.4 MiB; SHA-256 `a42c7d740fbb345ba9a26d469b22f301d73089ce3c6da993877ed2b6965a8ba1`). Include this asset in project submissions/builds.
+- **Purpose and limits:** Produces a synthetic-image risk score for a face crop from a single video frame. The model card reports training on 2.7 million examples from 4,803 generators. It is used as an experimental per-frame signal; this project has not evaluated or calibrated it on held-out live video, so its score is not a probability of fraud or proof of a deepfake.
+- **Preprocessing/output:** Face crop resized to 440 pixels then center-cropped to 384×384, RGB normalized with CLIP mean/std; a single logit is converted with sigmoid to `[0,1]` and fused as visual evidence. The detector samples at most once every two seconds and reuses the latest score for up to four seconds.
+- **Runtime:** ONNX Runtime Web 1.23.2, WebGPU preferred with WASM fallback. The 87 MB FP32 model can increase package size, memory use, and startup time; CPU inference is suitable for demonstrations but may be slow on lower-powered devices.
 
 ---
 

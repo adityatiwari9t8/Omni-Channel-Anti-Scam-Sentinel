@@ -1,27 +1,18 @@
-# Sentinel Latency & Resource Benchmarks
+# Performance and Evaluation Evidence
 
-Recorded on macOS (Apple Silicon M-series, Chrome 116+ / Node 22+).
+This document separates reproducible project evaluation from informal performance notes. Do not present unverified notes as measured project results.
 
-### 1. Per-Stage Latency Budget vs Measured
+## Reproducible evaluation currently available
 
-| Stage | Budget | Measured Median | Notes |
-|---|---|---|---|
-| JPEG encode (Content Script) | < 10 ms | 3.2 ms | 480 px width, quality 0.7 |
-| Frame transport & decode | < 5 ms | 2.1 ms | Base64 decode to `ImageBitmap` |
-| Vision landmarks per frame | < 60 ms | 18.4 ms | MediaPipe FaceLandmarker (WASM) |
-| Audio model per 4s window | < 300 ms | ~1500 ms (AASIST) | WASM single-thread CPU execution |
-| Sync & Arbiter per update | < 20 ms | 1.8 ms | Pearson correlation + state machine |
-| End-to-end alert trigger | < 10 s | ~8.2 s | Cumulative dwell and EMA smoothing |
+The text classifier was evaluated on a random stratified holdout from an LLM-generated English phishing email corpus (seed 17; 2,996 training and 750 test examples). Results: 99.73% accuracy, 99.80% phishing precision and recall, 0.39% false-positive rate, and ROC AUC 0.99999. Related generated examples may occur across the random split, so these metrics do not establish generalization to real email. The bundled TypeScript classifier scored 85% binary accuracy on 20 authored diagnostic fixtures (10 TN, 0 FP, 3 FN, 7 TP; `suspicious` counted as positive).
 
-### 2. System Resource Consumption
+Reproduce the fixture evaluation with `node eval/text/run_eval.mjs`. The corpus training/evaluation script is documented in `eval/text/report.md`.
 
-| Condition | CPU Usage | Memory Delta | Call Quality |
-|---|---|---|---|
-| Idle Meet / Zoom Call | ~12% | Baseline | Smooth (60 fps UI) |
-| Call + Sentinel Active | ~26% | +115 MB | Smooth, zero audio artifacts |
+## Not yet measured on project data
 
-### 3. Key Observations & Trade-Offs
+- Audio and video accuracy, EER, false-positive rates, and calibrated thresholds: no labeled project clips are present.
+- Vision and audio/visual synchronization thresholds and liveness challenge rates: no labeled sessions are present.
+- Extension end-to-end latency, CPU, memory, and call quality: no repeatable live-browser measurement log is included.
+- Network egress behavior: source checks pass and CSP restricts destinations to the local origin; perform a Chrome DevTools Network-panel check on the final build before presenting this as observed browser evidence.
 
-1. **Audio Latency:** AASIST running on single-threaded WASM takes ~1.5s per 4-second hop. The pipeline drops backed-up audio chunks asynchronously so the call and visual detectors remain real-time.
-2. **Visual Lip-Sync:** Vision landmarking runs at ~18ms per frame, easily sustaining the 10 fps sampling rate.
-3. **Zero Network Egress:** Confirmed via Chrome DevTools Network inspection that zero bytes leave the browser during detection.
+Earlier drafts recorded estimates such as 18.4 ms per vision frame, 1.5 s per AASIST window, and 8.2 s to alert. Their raw traces and repeatable measurement procedure are absent, so treat them as informal development notes, not validated benchmarks. See `eval/audio/report.md` and `eval/vision/report.md` for data requirements and limitations.

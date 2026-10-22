@@ -32,12 +32,16 @@ const entries = target === "extension"
   : [
       { in: "apps/harness/src/index.ts", out: "harness", format: "esm" },
       { in: "apps/harness/src/replay.ts", out: "replay", format: "esm" },
+      { in: "apps/extension/src/offscreen/audio-worklet.ts", out: "audio-worklet", format: "iife" },
     ];
 
 const common = {
   bundle: true, platform: "browser", target: "chrome116", sourcemap: true,
   minify: !watch, jsx: "automatic", logLevel: "info", plugins: [inlineCss],
-  define: { "process.env.NODE_ENV": JSON.stringify(watch ? "development" : "production") },
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(watch ? "development" : "production"),
+    __SENTINEL_DEV__: JSON.stringify(watch),
+  },
 };
 
 async function findModuleDir(from, name) {

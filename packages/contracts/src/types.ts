@@ -70,7 +70,14 @@ export interface FrameResult {
   faceOccluded: boolean;   // face or mouth mostly hidden
   landmarkQuality: Score01;// 1 = stable, confident landmarks
   handNearFace: boolean;   // false if hands are not tracked
+  raisedFingers?: number;  // estimated extended fingers, 0..5; used for the finger challenge
   latencyMs: number;
+  /** Frame-level pretrained synthetic-image/deepfake score. Experimental and uncalibrated. */
+  deepfakeScore?: Score01;
+  /** Fixed low fusion weight for the uncalibrated frame classifier; not a probability of correctness. */
+  deepfakeConfidence?: Score01;
+  /** Whether the optional pretrained visual model loaded successfully. */
+  deepfakeAvailable?: boolean;
 }
 export interface VisionDetector {
   /** true only for the scripted mocks in @sentinel/mocks */

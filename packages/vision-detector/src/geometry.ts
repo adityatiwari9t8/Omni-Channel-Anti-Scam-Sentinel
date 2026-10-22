@@ -22,8 +22,21 @@ export function faceBox(points: Point3[], width: number, height: number): Box | 
 
 export function boxArea(b: Box): number { return Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0); }
 
-export function handGeometry(hands: Point3[][], width: number, height: number, face: Box | null): { near: boolean; coverage: number } {
-  if (!face || !hands.length) return { near: false, coverage: 0 };
+function extendedFingerCount(points: Point3[]): number {
+  if (points.length < 21) return 0;
+  const wrist = points[0];
+  // MediaPipe hand landmark triplets: (tip, PIP/IP). Comparing each tip's
+  // wrist distance to its joint distance works for rotated hands better than
+  // assuming every finger points toward the top of the image.
+  const pairs: Array<[number, number]> = [[4, 3], [8, 6], [12, 10], [16, 14], [20, 18]];
+  const distance3 = (a: Point3, b: Point3) => Math.hypot(a.x - b.x, a.y - b.y, (a.z ?? 0) - (b.z ?? 0));
+  return pairs.reduce((count, [tip, joint]) =>
+    count + (distance3(points[tip], wrist) > distance3(points[joint], wrist) * 1.1 ? 1 : 0), 0);
+}
+
+export function handGeometry(hands: Point3[][], width: number, height: number, face: Box | null): { near: boolean; coverage: number; raisedFingers: number } {
+  const raisedFingers = Math.max(0, ...hands.map(extendedFingerCount));
+  if (!face || !hands.length) return { near: false, coverage: 0, raisedFingers };
   const w = face.x1 - face.x0, h = face.y1 - face.y0;
   const expanded = { x0: face.x0 - w * 0.2, x1: face.x1 + w * 0.2, y0: face.y0 - h * 0.2, y1: face.y1 + h * 0.2 };
   const boxes = hands.map((points) => faceBox(points, width, height)).filter((b): b is Box => Boolean(b));
@@ -49,7 +62,7 @@ export function handGeometry(hands: Point3[][], width: number, height: number, f
     area += (x1 - x0) * covered;
   }
   const total = boxArea(face);
-  return { near, coverage: total ? clamp(area / total, 0, 1) : 0 };
+  return { near, coverage: total ? clamp(area / total, 0, 1) : 0, raisedFingers };
 }
 
 export function poseFromMatrix(matrix?: { data?: ArrayLike<number> } | ArrayLike<number>): Pose | null {

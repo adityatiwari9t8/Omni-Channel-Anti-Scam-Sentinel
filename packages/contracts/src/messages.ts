@@ -37,5 +37,5 @@ export type OffscreenToContent =
 export const CHALLENGE_PROMPTS: Record<ChallengeType, string> = {
   turn_head_left_right: "Ask the caller to slowly turn their head left, then right.",
   cover_half_face: "Ask the caller to cover half of their face with their hand.",
-  raise_fingers: "Ask the caller to hold up three fingers next to their face.",
+  raise_fingers: "Ask the caller to hold up at least three fingers next to their face and keep them visible.",
 };

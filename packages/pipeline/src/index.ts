@@ -35,6 +35,8 @@ export interface Pipeline {
   start(init: InitOptions): Promise<void>;
   pushAudio(chunk: Float32Array, tsMs: Ms): void;
   pushFrame(frame: ImageBitmap, tsMs: Ms): Promise<void>;
+  /** Re-evaluate signal freshness when a capture stream stops producing samples. */
+  heartbeat(tsMs: Ms): void;
   setSettings(s: Settings): void;
   onUpdate(cb: (u: PipelineUpdate) => void): void;
   stop(): void;
@@ -46,6 +48,7 @@ export function createPipeline(
   opts?: { logger?: (line: object) => void },
 ): Pipeline {
   let isRunning = false;
+  let runGeneration = 0;
   let inChallenge = false;
   let activeChallengeType: string | undefined = undefined;
 
@@ -59,15 +62,15 @@ export function createPipeline(
 
   const updateListeners = new Set<(u: PipelineUpdate) => void>();
 
-  async function processAudioQueue() {
-    if (isAudioProcessing || !pendingAudioChunk) return;
+  async function processAudioQueue(generation: number) {
+    if (generation !== runGeneration || !isRunning || isAudioProcessing || !pendingAudioChunk) return;
     isAudioProcessing = true;
     const { chunk, tsMs } = pendingAudioChunk;
     pendingAudioChunk = null;
 
     try {
       const res = await deps.audio.push(chunk, tsMs);
-      if (res) {
+      if (res && generation === runGeneration && isRunning) {
         latestAudioResult = res;
         deps.arbiter.onAudio(res);
         emitUpdate(tsMs);
@@ -75,9 +78,10 @@ export function createPipeline(
     } catch (err) {
       console.error("[pipeline] Audio push failed:", err);
     } finally {
+      if (generation !== runGeneration) return;
       isAudioProcessing = false;
       if (pendingAudioChunk) {
-        void processAudioQueue();
+        void processAudioQueue(generation);
       }
     }
   }
@@ -90,12 +94,14 @@ export function createPipeline(
       if (!inChallenge || activeChallengeType !== out.challenge) {
         inChallenge = true;
         activeChallengeType = out.challenge;
+        deps.arbiter.onChallenge(null);
         deps.challenge.start(out.challenge, tsMs);
       }
     } else if (inChallenge) {
       inChallenge = false;
       activeChallengeType = undefined;
       deps.challenge.cancel();
+      deps.arbiter.onChallenge(null);
     }
 
     const update: PipelineUpdate = {
@@ -131,6 +137,7 @@ export function createPipeline(
 
   return {
     async start(init: InitOptions): Promise<void> {
+      const generation = ++runGeneration;
       isRunning = true;
       inChallenge = false;
       activeChallengeType = undefined;
@@ -138,12 +145,29 @@ export function createPipeline(
       latestAudioResult = null;
       latestSyncResult = null;
       latestFrameResult = null;
+      isAudioProcessing = false;
+      pendingAudioChunk = null;
 
-      await Promise.all([
-        deps.audio.init(init),
-        deps.vision.init(init),
-        deps.challenge.init(init),
-      ]);
+      try {
+        await Promise.all([
+          deps.audio.init(init),
+          deps.vision.init(init),
+          deps.challenge.init(init),
+        ]);
+      } catch (error) {
+        if (generation === runGeneration) {
+          isRunning = false;
+          deps.audio.dispose();
+          deps.vision.dispose();
+          deps.challenge.cancel();
+        }
+        throw error;
+      }
+      if (generation !== runGeneration || !isRunning) {
+        deps.audio.dispose();
+        deps.vision.dispose();
+        deps.challenge.cancel();
+      }
     },
 
     pushAudio(chunk: Float32Array, tsMs: Ms): void {
@@ -158,14 +182,16 @@ export function createPipeline(
         pendingAudioChunk = { chunk, tsMs };
       } else {
         pendingAudioChunk = { chunk, tsMs };
-        void processAudioQueue();
+        void processAudioQueue(runGeneration);
       }
     },
 
     async pushFrame(frame: ImageBitmap, tsMs: Ms): Promise<void> {
       if (!isRunning) return;
+      const generation = runGeneration;
 
       const frameRes = await deps.vision.processFrame(frame, tsMs);
+      if (generation !== runGeneration || !isRunning) return;
       latestFrameResult = frameRes;
 
       deps.sync.pushFrame(frameRes);
@@ -182,6 +208,10 @@ export function createPipeline(
       emitUpdate(tsMs);
     },
 
+    heartbeat(tsMs: Ms): void {
+      if (isRunning) emitUpdate(tsMs);
+    },
+
     setSettings(s: Settings): void {
       deps.arbiter.setSensitivity(s.sensitivity);
     },
@@ -191,9 +221,12 @@ export function createPipeline(
     },
 
     stop(): void {
+      runGeneration++;
       isRunning = false;
       inChallenge = false;
       activeChallengeType = undefined;
+      pendingAudioChunk = null;
+      isAudioProcessing = false;
       updateListeners.clear();
       deps.sync.reset();
       deps.arbiter.reset();

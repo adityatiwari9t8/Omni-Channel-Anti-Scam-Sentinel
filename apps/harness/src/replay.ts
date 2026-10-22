@@ -4,7 +4,7 @@ import { createAudioDetector } from "@sentinel/audio-detector";
 import { createVisionDetector } from "@sentinel/vision-detector";
 import { createSyncDetector } from "@sentinel/sync-detector";
 import { createChallengeVerifier } from "@sentinel/challenge-verifier";
-import type { ArbiterOutput, Sensitivity } from "@sentinel/contracts";
+import { AUDIO_CHUNK_MS, type ArbiterOutput, type Sensitivity } from "@sentinel/contracts";
 
 const assetBase = new URL("./", document.baseURI).href;
 
@@ -25,14 +25,21 @@ const wAudioSlider = document.getElementById("wAudio") as HTMLInputElement;
 const wSyncSlider = document.getElementById("wSync") as HTMLInputElement;
 const wAudioVal = document.getElementById("wAudioVal")!;
 const wSyncVal = document.getElementById("wSyncVal")!;
+const wVisionSlider = document.getElementById("wVision") as HTMLInputElement;
+const wVisionVal = document.getElementById("wVisionVal")!;
 
 wAudioSlider.addEventListener("input", () => { wAudioVal.textContent = Number(wAudioSlider.value).toFixed(2); });
 wSyncSlider.addEventListener("input", () => { wSyncVal.textContent = Number(wSyncSlider.value).toFixed(2); });
+wVisionSlider.addEventListener("input", () => { wVisionVal.textContent = Number(wVisionSlider.value).toFixed(2); });
 
 let pipeline: Pipeline | null = null;
 let audioCtx: AudioContext | null = null;
+let mediaSource: MediaElementAudioSourceNode | null = null;
+let chunkerNode: AudioWorkletNode | null = null;
 let isRunning = false;
 let frameLoopId: number | null = null;
+let heartbeatHandle: number | null = null;
+let selectedObjectUrl: string | null = null;
 
 const history: { t: number; score: number | null; state: string }[] = [];
 const loggedLines: any[] = [];
@@ -40,7 +47,9 @@ const loggedLines: any[] = [];
 clipPicker.addEventListener("change", () => {
   const file = clipPicker.files?.[0];
   if (file) {
-    player.src = URL.createObjectURL(file);
+    if (selectedObjectUrl) URL.revokeObjectURL(selectedObjectUrl);
+    selectedObjectUrl = URL.createObjectURL(file);
+    player.src = selectedObjectUrl;
   }
 });
 
@@ -69,11 +78,13 @@ function drawChart() {
   chartCtx.strokeStyle = "#38bdf8";
   chartCtx.lineWidth = 2;
 
+  let drawing = false;
   points.forEach((pt, i) => {
     const px = (i / (maxPoints - 1)) * w;
-    const scoreVal = pt.score ?? 0;
+    if (pt.score === null) { drawing = false; return; }
+    const scoreVal = pt.score;
     const py = h - scoreVal * (h - 20) - 10;
-    if (i === 0) chartCtx.moveTo(px, py);
+    if (!drawing) { chartCtx.moveTo(px, py); drawing = true; }
     else chartCtx.lineTo(px, py);
   });
   chartCtx.stroke();
@@ -82,6 +93,9 @@ function drawChart() {
 async function startReplay() {
   stopReplay();
   isRunning = true;
+  heartbeatHandle = window.setInterval(() => {
+    if (isRunning && pipeline === activePipeline) activePipeline.heartbeat(performance.timeOrigin + performance.now());
+  }, 500);
   history.length = 0;
   loggedLines.length = 0;
   logBox.textContent = "";
@@ -89,6 +103,7 @@ async function startReplay() {
   const arbiter = createArbiter({
     wAudio: Number(wAudioSlider.value),
     wSync: Number(wSyncSlider.value),
+    wVision: Number(wVisionSlider.value),
   });
   arbiter.setSensitivity(sensitivitySel.value as Sensitivity);
 
@@ -111,12 +126,59 @@ async function startReplay() {
     },
   );
 
-  await pipeline.start({ assetBase });
+  const activePipeline = pipeline;
+  try {
+    if (!audioCtx) {
+      audioCtx = new AudioContext();
+      await audioCtx.audioWorklet.addModule(new URL("./audio-worklet.js", document.baseURI));
+      mediaSource = audioCtx.createMediaElementSource(player);
+      mediaSource.connect(audioCtx.destination);
+    }
+    if (chunkerNode) {
+      mediaSource?.disconnect(chunkerNode);
+      chunkerNode.disconnect();
+    }
+    chunkerNode = new AudioWorkletNode(audioCtx, "chunker", { numberOfInputs: 1, numberOfOutputs: 0 });
+    chunkerNode.port.onmessage = (e: MessageEvent<Float32Array>) => {
+      if (isRunning && pipeline === activePipeline) activePipeline?.pushAudio(e.data, performance.timeOrigin + performance.now() - AUDIO_CHUNK_MS);
+    };
+    mediaSource!.connect(chunkerNode);
+    await audioCtx.resume();
+    if (!isRunning || pipeline !== activePipeline) {
+      mediaSource?.disconnect(chunkerNode);
+      chunkerNode.disconnect();
+      chunkerNode = null;
+      return;
+    }
+    await activePipeline.start({ assetBase });
+    if (pipeline !== activePipeline) {
+      activePipeline.stop();
+      return;
+    }
+  } catch (error) {
+    isRunning = false;
+    if (chunkerNode) {
+      chunkerNode.port.onmessage = null;
+      mediaSource?.disconnect(chunkerNode);
+      chunkerNode.disconnect();
+      chunkerNode = null;
+    }
+    if (pipeline === activePipeline) {
+      activePipeline.stop();
+      pipeline = null;
+    }
+    statusBadge.textContent = "START FAILED";
+    statusBadge.className = "status-badge badge-alert";
+    reasonsEl.textContent = error instanceof Error ? error.message : String(error);
+    return;
+  }
+  isRunning = true;
 
   pipeline.onUpdate((u: PipelineUpdate) => {
     const out: ArbiterOutput = u.out;
-    statusBadge.textContent = out.state;
-    statusBadge.className = `status-badge badge-${out.state.toLowerCase()}`;
+    const noEvidence = out.state === "CLEAR" && out.fusedScore === null;
+    statusBadge.textContent = noEvidence ? "NO DATA" : out.state;
+    statusBadge.className = `status-badge badge-${noEvidence ? "no-data" : out.state.toLowerCase()}`;
     reasonsEl.textContent = out.reasons.join(" • ") || "Normal signal metrics";
 
     history.push({
@@ -152,6 +214,10 @@ async function startReplay() {
 
 function stopReplay() {
   isRunning = false;
+  if (heartbeatHandle !== null) {
+    clearInterval(heartbeatHandle);
+    heartbeatHandle = null;
+  }
   if (frameLoopId !== null) {
     cancelAnimationFrame(frameLoopId);
     frameLoopId = null;
@@ -161,8 +227,12 @@ function stopReplay() {
     pipeline = null;
   }
   if (audioCtx) {
-    audioCtx.close().catch(() => {});
-    audioCtx = null;
+    if (chunkerNode) {
+      chunkerNode.port.onmessage = null;
+      mediaSource?.disconnect(chunkerNode);
+      chunkerNode.disconnect();
+      chunkerNode = null;
+    }
   }
 }
 

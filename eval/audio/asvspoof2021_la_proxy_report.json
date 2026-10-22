@@ -1,0 +1,133 @@
+{
+  "evaluation": "Audio-only ASVspoof 2021 LA proxy; not live meeting-call or audiovisual accuracy",
+  "dataset": "SpeechAntiSpoofingBenchmarks/ASVspoof2021_LA",
+  "dataset_revision": "46df9e62a71f74d0597cd84e3814784b86c6de83",
+  "dataset_license": "ODC-By (dataset card)",
+  "dataset_phase": "eval only (notes.phase == eval)",
+  "shards": {
+    "0": "/private/tmp/asvspoof-shard0.parquet",
+    "11": "/private/tmp/asvspoof-shard11.parquet",
+    "23": "/private/tmp/asvspoof-shard23.parquet"
+  },
+  "model_id": "AASIST-ASVspoof2019-LA-ONNX-1.0",
+  "model_sha256": "130e536266b7c537f9a13029e1612a9f392fd1cc827783683b6d1c062a3db5e1",
+  "inference_provider": "ONNX Runtime CPU",
+  "project_window_seconds": 4.0375,
+  "project_threshold_fake": 0.5,
+  "counts": {
+    "eval_1": 16613,
+    "too_short_1": 14505,
+    "eligible_1": 2108,
+    "scored_1": 2063,
+    "eval_0": 1841,
+    "too_short_0": 1471,
+    "eligible_0": 370,
+    "gate_abstain_0": 17,
+    "scored_0": 353,
+    "gate_abstain_1": 45
+  },
+  "eligible_clip_count": 2478,
+  "scored_clip_count": 2416,
+  "abstain_count": 62,
+  "scored_class_counts": {
+    "bonafide": 353,
+    "spoof": 2063
+  },
+  "coverage_within_selected_eval_shards": {
+    "bonafide_window_eligible": 0.20097772949483977,
+    "spoof_window_eligible": 0.12688858123156563,
+    "bonafide_scored": 0.19174361759913092,
+    "spoof_scored": 0.12417985914645158
+  },
+  "metrics_at_project_threshold_on_scored_clips": {
+    "accuracy": 0.9317052980132451,
+    "balanced_accuracy": 0.8977842439089365,
+    "spoof_precision": 0.9735528942115769,
+    "spoof_recall": 0.9457101308773631,
+    "bonafide_false_positive_rate": 0.1501416430594901,
+    "spoof_recall_95ci_wilson": [
+      0.9350778407770179,
+      0.9546855547342783
+    ],
+    "bonafide_fpr_95ci_wilson": [
+      0.11665404267027527,
+      0.19116208639091045
+    ],
+    "confusion_matrix": {
+      "tn": 300,
+      "fp": 53,
+      "fn": 112,
+      "tp": 1951
+    },
+    "roc_auc": 0.9627519262220232
+  },
+  "diagnostic_eer_on_scored_clips": {
+    "eer": 0.09064812513474285,
+    "threshold": 0.8789269328117371,
+    "far": 0.0906515580736544,
+    "frr": 0.09064469219583131,
+    "warning": "Diagnostic only; do not deploy a threshold selected from this evaluation set."
+  },
+  "spoof_recall_by_attack": {
+    "A07": {
+      "n": 61,
+      "recall_at_project_threshold": 0.9672131147540983
+    },
+    "A08": {
+      "n": 82,
+      "recall_at_project_threshold": 1.0
+    },
+    "A09": {
+      "n": 130,
+      "recall_at_project_threshold": 1.0
+    },
+    "A10": {
+      "n": 54,
+      "recall_at_project_threshold": 0.8148148148148148
+    },
+    "A11": {
+      "n": 49,
+      "recall_at_project_threshold": 1.0
+    },
+    "A12": {
+      "n": 115,
+      "recall_at_project_threshold": 0.9217391304347826
+    },
+    "A13": {
+      "n": 100,
+      "recall_at_project_threshold": 1.0
+    },
+    "A14": {
+      "n": 167,
+      "recall_at_project_threshold": 1.0
+    },
+    "A15": {
+      "n": 173,
+      "recall_at_project_threshold": 0.9595375722543352
+    },
+    "A16": {
+      "n": 123,
+      "recall_at_project_threshold": 0.983739837398374
+    },
+    "A17": {
+      "n": 328,
+      "recall_at_project_threshold": 0.9329268292682927
+    },
+    "A18": {
+      "n": 327,
+      "recall_at_project_threshold": 0.8165137614678899
+    },
+    "A19": {
+      "n": 354,
+      "recall_at_project_threshold": 1.0
+    }
+  },
+  "limitations": [
+    "ASVspoof 2021 LA uses telephony/VoIP coding and transmission conditions, but is not Google Meet or Zoom capture.",
+    "Only AASIST audio scoring was evaluated; vision, sync, liveness, fusion, extension capture, and alerts were not tested.",
+    "Short utterance files and clips with no usable speech windows are abstentions, not bonafide predictions; coverage is reported separately.",
+    "This run covers only the supplied shards, not the full benchmark population.",
+    "The project threshold 0.5 is provisional and has not been calibrated on this benchmark.",
+    "Wilson confidence intervals are utterance-level and do not account for dependence among clips from the same speaker or attack condition."
+  ]
+}

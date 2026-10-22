@@ -1,4 +1,4 @@
-import type { ChallengeStatus, ChallengeType, ChallengeVerifier, FrameResult, InitOptions } from "@sentinel/contracts";
+import { CHALLENGE_PROMPTS, type ChallengeStatus, type ChallengeType, type ChallengeVerifier, type FrameResult, type InitOptions } from "@sentinel/contracts";
 import { evaluateCover } from "./cover";
 import { evaluateFingers } from "./fingers";
 import { evaluateHeadTurn } from "./head-turn";
@@ -28,9 +28,7 @@ export function createChallengeVerifier(): ChallengeVerifier {
         `A hand stayed near the face for ${Math.round(r.durationMs)} ms; artifact score ${r.artifactScore.toFixed(2)}.`);
     }
     if (!terminal && now - startMs >= 12000) {
-      const evidence = challenge === "turn_head_left_right" ? "Both left and right turns were not detected before timeout."
-        : challenge === "cover_half_face" ? "Face coverage and recovery were not both detected before timeout."
-        : "A hand near the face was not detected before timeout.";
+      const evidence = `Challenge was not completed: ${CHALLENGE_PROMPTS[challenge]}`;
       terminal = status("failed", 0, evidence);
     }
   };

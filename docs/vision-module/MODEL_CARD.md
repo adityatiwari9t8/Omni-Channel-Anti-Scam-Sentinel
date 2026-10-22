@@ -21,6 +21,6 @@ Asset inventory:
 |---|---:|---|
 | `face_landmarker.task` | 3,758,596 | `64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff` |
 | `hand_landmarker.task` | 7,819,105 | `fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1` |
-| `selftest/face.jpg` | absent (consent required) | not applicable |
+| `selftest/face.jpg` | 413,252 | `2465de71c15e5bb26e1d78cf88a483e6860ed3c6e17bb111c72fc8c221da88c7` |
 
-The self-test image is deliberately left empty until a consenting team member supplies it. No face image or labeled clip data was fabricated for this handover.
+`selftest/face.jpg` is a synthetically generated fictional portrait used only to smoke-test face landmarks and the frame-classifier inference path. Its score is not a detector accuracy result. It does not replace consented real-call validation, and no labeled real/fake clip data is included.
