@@ -28,7 +28,7 @@ All inference runs inside the browser sandbox using **ONNX Runtime Web (WASM)** 
 
 The Sentinel system is partitioned into three cleanly separated roles unified through shared contracts (`@sentinel/contracts`):
 
-| Role | Contributor | Focus Areas & Packages |
+| Role | Member | Focus Areas & Packages |
 |---|---|---|
 | **Audio Module** | **Utkarsh** | Audio deepfake detection (`packages/audio-detector`), phishing text classifier (`packages/text-classifier`), model cards, training notebooks. |
 | **Vision Module** | **Yash** | Facial computer vision (`packages/vision-detector`), audio-visual sync (`packages/sync-detector`), interactive challenge verifier (`packages/challenge-verifier`). |
