@@ -6,21 +6,21 @@ The goal of v2: each of the three people can generate their own part (with an AI
 
 Document set:
 - `00-master-integration-doc.md` (this file): everyone reads all of it
-- `01-role1-ml-audio.md`: Role 1 also reads this
-- `02-role2-computer-vision.md`: Role 2 also reads this
-- `03-role3-fullstack-extension.md`: Role 3 also reads this
+- `01-audio-module-ml-audio.md`: Audio Module also reads this
+- `computer-vision.md`: Vision Module also reads this
+- `fullstack-extension.md`: Full-Stack Integration also reads this
 
-Names: Role 1 is Utkarsh, Role 2 is Yash, Role 3 is Aditya.
+Names: Audio Module is Utkarsh, Vision Module is Yash, Full-Stack Integration is Aditya.
 
 ## 0. How the work flows (read this first)
 
-People: **Role 1 = Utkarsh** (audio and text), **Role 2 = Yash** (vision), **Role 3 = Aditya** (full stack and integration). There is **one repository**, built in three phases. Each person generates their part with a coding agent (Claude Code, a Cursor agent, or similar) that can run shell commands. These documents contain the prompt, the shared starter files, the commands, and the checks.
+People: **Audio Module = Utkarsh** (audio and text), **Vision Module = Yash** (vision), **Full-Stack Integration = Aditya** (full stack and integration). There is **one repository**, built in three phases. Each person generates their part with a coding agent (Claude Code, a Cursor agent, or similar) that can run shell commands. These documents contain the prompt, the shared starter files, the commands, and the checks.
 
 **Phase 1: build your part separately (no shared repo yet).**
 1. Make an empty folder. Put **two files** in a `docs/` folder inside it: `00-master-integration-doc.md` (this file) and your own role doc (`01-...` Utkarsh, `02-...` Yash, `03-...` Aditya).
 2. Open your agent in that folder and allow it to run commands.
 3. Open your role doc. At the top is a **START HERE** block with optional inputs and **one prompt to paste**. Paste it, and nothing else.
-4. The agent creates the shared scaffold from Appendix A, generates your part, runs the tests and checks, and packs your folders into `role1-<date>.tgz` or `role2-<date>.tgz`. Read its final report and do the "human steps" it lists.
+4. The agent creates the shared scaffold from Appendix A, generates your part, runs the tests and checks, and packs your folders into `audio-module-<date>.tgz` or `vision-module-<date>.tgz`. Read its final report and do the "human steps" it lists.
 5. Utkarsh and Yash **send their tarballs to Aditya**. They do not create a repository.
 
 **Phase 2: Aditya integrates and builds the full stack.**
@@ -29,11 +29,11 @@ People: **Role 1 = Utkarsh** (audio and text), **Role 2 = Yash** (vision), **Rol
 
 **Phase 3: everyone works in the one GitHub repository.**
 1. Utkarsh and Yash **clone the repository** (section 18.8), run `pnpm install` and `pnpm verify`.
-2. Each works on their own branch (`role1/<topic>`, `role2/<topic>`) and only inside their own folders, runs `node scripts/check-ownership.mjs <role>`, pushes, and opens a pull request. Aditya reviews and merges.
+2. Each works on their own branch (`audio-module/<topic>`, `vision-module/<topic>`) and only inside their own folders, runs `node scripts/check-ownership.mjs <role>`, pushes, and opens a pull request. Aditya reviews and merges.
 
 **Why there are no merge conflicts:** the three parts live in different folders (section 2). Everyone's agent builds the same scaffold from the same text, but only the owned folders are delivered. `node scripts/check-ownership.mjs <role>` fails if anything outside your folders changed, or if you created a README. `pnpm-lock.yaml` is git-ignored, and each person writes their own labels file.
 
-**Documentation rule:** the repository has **one README**, at the root, owned by Aditya. Role packages have **no README**. Utkarsh and Yash write their notes in `docs/role1/` and `docs/role2/` (`HANDOVER.md` and `MODEL_CARD.md`, section 17.5).
+**Documentation rule:** the repository has **one README**, at the root, owned by Aditya. Role packages have **no README**. Utkarsh and Yash write their notes in `docs/audio-module/` and `docs/vision-module/` (`HANDOVER.md` and `MODEL_CARD.md`, section 17.5).
 
 ## Contents
 0. How the work flows (read this first)
@@ -82,7 +82,7 @@ A Chrome extension that watches a live Google Meet call and warns the user if th
 Desktop Zoom or Teams apps, other browsers, mobile, server-side inference, an on-device LLM, training from scratch unless the first model-selection spike forces it, anything not on the demo path.
 
 ### 1.3 Corrections to earlier docs (read these)
-- Chrome extension messaging serializes messages as JSON, so an `ImageBitmap` or `ArrayBuffer` **cannot** be passed from the content script to the offscreen document directly. Frames travel as **base64 JPEG** and the pipeline decodes them back to `ImageBitmap` before calling Role 2's code. Role 2 still receives an `ImageBitmap`. (Verify in the first spike; if your Chrome version supports structured-clone messaging, keep JPEG anyway for consistency.)
+- Chrome extension messaging serializes messages as JSON, so an `ImageBitmap` or `ArrayBuffer` **cannot** be passed from the content script to the offscreen document directly. Frames travel as **base64 JPEG** and the pipeline decodes them back to `ImageBitmap` before calling Vision Module's code. Vision Module still receives an `ImageBitmap`. (Verify in the first spike; if your Chrome version supports structured-clone messaging, keep JPEG anyway for consistency.)
 - The default Manifest V3 extension-page CSP already allows WebAssembly (`wasm-unsafe-eval`). Do not weaken it.
 - Web Workers are **optional**. The offscreen document is a hidden page separate from the Meet tab, so heavy inference there cannot freeze the call UI. Start on its main thread, add a worker only if you measure problems.
 - At 10 frames per second (100 ms per frame) the lip-sync check sees mouth open/close at roughly word level. It **cannot** reliably see short sounds such as a "P" lip closure. Do not claim phoneme-level lip-sync detection; report this limit.
@@ -94,21 +94,21 @@ Desktop Zoom or Teams apps, other browsers, mobile, server-side inference, an on
 
 | Role | Owner | Owns (only these paths) |
 |---|---|---|
-| Role 1: ML (audio + text) | Utkarsh | `packages/audio-detector/`, `packages/text-classifier/`, `colab/audio/`, `colab/text/`, `eval/audio/`, `eval/text/`, `eval/clips/labels/role1.csv`, `docs/role1/` |
-| Role 2: Computer Vision | Yash | `packages/vision-detector/`, `packages/sync-detector/`, `packages/challenge-verifier/`, `colab/vision/`, `eval/vision/`, `eval/clips/labels/role2.csv`, `docs/role2/` |
-| Role 3: Full-stack + integration | Aditya | the root `README.md` (the only README), everything else: root config files, `packages/contracts/`, `packages/mocks/`, `packages/pipeline/`, `packages/arbiter/`, `apps/`, `scripts/`, `docs/` (except role subfolders) |
+| Audio Module: ML (audio + text) | Utkarsh | `packages/audio-detector/`, `packages/text-classifier/`, `colab/audio/`, `colab/text/`, `eval/audio/`, `eval/text/`, `eval/clips/labels/audio-eval.csv`, `docs/audio-module/` |
+| Vision Module: Computer Vision | Yash | `packages/vision-detector/`, `packages/sync-detector/`, `packages/challenge-verifier/`, `colab/vision/`, `eval/vision/`, `eval/clips/labels/vision-eval.csv`, `docs/vision-module/` |
+| Full-Stack Integration: Full-stack + integration | Aditya | the root `README.md` (the only README), everything else: root config files, `packages/contracts/`, `packages/mocks/`, `packages/pipeline/`, `packages/arbiter/`, `apps/`, `scripts/`, `docs/` (except role subfolders) |
 
 ### 2.1 The drop-in rules (all three must follow)
 1. **Only edit files you own.** Need a change elsewhere? Ask the owner.
-2. **Your package folder is self-contained.** It carries its own source, tests, `package.json`, model files (`assets/`), and `sentinel.assets.json`. Copying the folder is a complete delivery. **No README inside role packages or anywhere in your folders** (the repository has one root README, written by Aditya). Your notes go in `docs/role<N>/HANDOVER.md` and `docs/role<N>/MODEL_CARD.md` (section 17.5).
+2. **Your package folder is self-contained.** It carries its own source, tests, `package.json`, model files (`assets/`), and `sentinel.assets.json`. Copying the folder is a complete delivery. **No README inside role packages or anywhere in your folders** (the repository has one root README, written by Aditya). Your notes go in `docs/audio-module/HANDOVER.md` and `docs/audio-module/MODEL_CARD.md` (section 17.5).
 3. **Exported names are fixed** (table in 2.2). Do not rename them.
-4. **Implement only the interfaces in `@sentinel/contracts`.** Do not import from other roles' packages. Do not change the contracts. If a contract must change, all three owners agree and Role 3 edits it.
-   Scaffold changes: the contracts, fixtures, self-test, and mocks change only with all three owners' agreement (and a new master doc version). Role 3 may add new files to the scaffold (for example the harness replay page) and may extend `scripts/build.mjs`'s entry list; Roles 1 and 2 never need those, because they deliver only their own folders.
+4. **Implement only the interfaces in `@sentinel/contracts`.** Do not import from other roles' packages. Do not change the contracts. If a contract must change, all three owners agree and Full-Stack Integration edits it.
+   Scaffold changes: the contracts, fixtures, self-test, and mocks change only with all three owners' agreement (and a new master doc version). Full-Stack Integration may add new files to the scaffold (for example the harness replay page) and may extend `scripts/build.mjs`'s entry list; Roles 1 and 2 never need those, because they deliver only their own folders.
 5. **No network calls.** No `fetch` to `http(s)` URLs, no `WebSocket`, no `XMLHttpRequest`, no `sendBeacon`. Load files only from `assetBase`. `pnpm check:privacy` fails the build otherwise.
-6. **Pin dependency versions** in your package's `package.json` (exact versions, no `^`) and record them in `docs/role<N>/HANDOVER.md`. Do not edit the root `package.json`.
+6. **Pin dependency versions** in your package's `package.json` (exact versions, no `^`) and record them in `docs/audio-module/HANDOVER.md`. Do not edit the root `package.json`.
 7. **Each package must pass `pnpm verify:parts` and the browser self-test** (section 11) before you hand it over. `node scripts/check-ownership.mjs <your role>` must pass too.
-8. **Large files** (models) go in `assets/`. In Phase 1 they travel inside your tarball. Once the project is on GitHub they are committed like any file: keep each under 50 MB (GitHub blocks files over 100 MB); for bigger files use Git LFS (section 18.8). Record the file names and sizes in `docs/role<N>/MODEL_CARD.md`. Audio and video **clips** are not committed; share them by drive link.
-9. **Handover format (Phase 1):** a `.tgz` of your owned folders, named `role<N>-<yyyymmdd>.tgz`, made with the commands in section 18.4. It already contains your `docs/role<N>/` notes. Send it to Aditya, who replaces the stub folders with yours (section 18.5). In Phase 3 there are no tarballs: you push branches and open pull requests.
+8. **Large files** (models) go in `assets/`. In Phase 1 they travel inside your tarball. Once the project is on GitHub they are committed like any file: keep each under 50 MB (GitHub blocks files over 100 MB); for bigger files use Git LFS (section 18.8). Record the file names and sizes in `docs/audio-module/MODEL_CARD.md`. Audio and video **clips** are not committed; share them by drive link.
+9. **Handover format (Phase 1):** a `.tgz` of your owned folders, named `role<N>-<yyyymmdd>.tgz`, made with the commands in section 18.4. It already contains your `docs/audio-module/` notes. Send it to Aditya, who replaces the stub folders with yours (section 18.5). In Phase 3 there are no tarballs: you push branches and open pull requests.
 
 ### 2.2 Fixed package names and exports
 
@@ -153,7 +153,7 @@ Gmail tab (https://mail.google.com)
       • draws a banner at the top of the email
 ```
 
-Verify in the first spike, before writing real code (Role 3 leads):
+Verify in the first spike, before writing real code (Full-Stack Integration leads):
 - `chrome.tabCapture.getMediaStreamId` needs a user gesture (opening the popup and pressing Start counts as invoking the extension; confirm). It cannot start silently.
 - Offscreen documents need the `USER_MEDIA` reason, and `AUDIO_PLAYBACK` if the document plays the call audio back. Check the current Chrome docs for reason names and any auto-close rules.
 - `AudioContext` may start suspended; call `resume()` after the stream is attached.
@@ -185,13 +185,13 @@ export interface InitOptions {
 
 /** Where assets are placed in dist (see sentinel.assets.json in each package). */
 export const ASSET_PATHS = {
-  audioModelDir: "models/audio/",   // model.onnx + meta.json (Role 1)
-  visionModelDir: "models/vision/", // face_landmarker.task (+ optional hand_landmarker.task) (Role 2)
-  ortDir: "ort/",                   // onnxruntime-web .wasm/.mjs files (Role 1)
-  mediapipeWasmDir: "mediapipe/wasm/", // @mediapipe/tasks-vision wasm files (Role 2)
+  audioModelDir: "models/audio/",   // model.onnx + meta.json (Audio Module)
+  visionModelDir: "models/vision/", // face_landmarker.task (+ optional hand_landmarker.task) (Vision Module)
+  ortDir: "ort/",                   // onnxruntime-web .wasm/.mjs files (Audio Module)
+  mediapipeWasmDir: "mediapipe/wasm/", // @mediapipe/tasks-vision wasm files (Vision Module)
 } as const;
 
-// ---------- Role 1: audio ----------
+// ---------- Audio Module: audio ----------
 export interface AudioResult {
   windowStartMs: Ms;
   windowEndMs: Ms;
@@ -208,7 +208,7 @@ export interface AudioDetector {
   dispose(): void;        // safe to call twice
 }
 
-// ---------- Role 1: text ----------
+// ---------- Audio Module: text ----------
 export interface EmailInput {
   subject: string;
   bodyText: string;
@@ -230,7 +230,7 @@ export interface TextClassifier {
   classify(e: EmailInput): Promise<TextResult>;
 }
 
-// ---------- Role 2: vision ----------
+// ---------- Vision Module: vision ----------
 export interface FrameResult {
   tsMs: Ms;
   faceFound: boolean;
@@ -282,7 +282,7 @@ export interface ChallengeVerifier {
   cancel(): void;
 }
 
-// ---------- Role 3: arbiter ----------
+// ---------- Full-Stack Integration: arbiter ----------
 export type ArbiterState = "CLEAR" | "SUSPICIOUS" | "CHALLENGE" | "ALERT";
 export interface ArbiterOutput {
   tsMs: Ms;
@@ -381,20 +381,20 @@ sentinel/
   scripts/
     build.mjs   serve.mjs   check-integration.mjs   check-privacy.mjs   check-ownership.mjs   make-stubs.mjs
   packages/
-    contracts/            (Role 3)  source in Appendix A
-    mocks/                (Role 3)  source in Appendix A
-    pipeline/             (Role 3)
-    arbiter/              (Role 3)
-    audio-detector/       (Role 1)  stub until Role 1's folder replaces it
-    text-classifier/      (Role 1)  stub until replaced
-    vision-detector/      (Role 2)  stub until replaced
-    sync-detector/        (Role 2)  stub until replaced
-    challenge-verifier/   (Role 2)  stub until replaced
+    contracts/            (Full-Stack Integration)  source in Appendix A
+    mocks/                (Full-Stack Integration)  source in Appendix A
+    pipeline/             (Full-Stack Integration)
+    arbiter/              (Full-Stack Integration)
+    audio-detector/       (Audio Module)  stub until Audio Module's folder replaces it
+    text-classifier/      (Audio Module)  stub until replaced
+    vision-detector/      (Vision Module)  stub until replaced
+    sync-detector/        (Vision Module)  stub until replaced
+    challenge-verifier/   (Vision Module)  stub until replaced
   apps/
-    extension/            (Role 3)  src/background, src/content, src/offscreen, src/popup, public/
-    harness/              (Role 3)  local page that runs the pipeline on a video file + self-test button
-  colab/   audio/ text/ vision/     (Role 1 / Role 2 notebooks and export scripts, NOT part of the build)
-  eval/    audio/ text/ vision/ clips/{labels/role1.csv, labels/role2.csv}
+    extension/            (Full-Stack Integration)  src/background, src/content, src/offscreen, src/popup, public/
+    harness/              (Full-Stack Integration)  local page that runs the pipeline on a video file + self-test button
+  colab/   audio/ text/ vision/     (Audio Module / Vision Module notebooks and export scripts, NOT part of the build)
+  eval/    audio/ text/ vision/ clips/{labels/audio-eval.csv, labels/vision-eval.csv}
   docs/    00-master... 01-... 02-... 03-...
 ```
 
@@ -404,14 +404,14 @@ The canonical, tested source of `package.json`, `pnpm-workspace.yaml`, `tsconfig
 Notes:
 - Node tests (`vitest`) cover **pure logic** only (feature math, correlation, arbiter, text rules, mocks). Anything that needs a browser (ONNX inference, MediaPipe, AudioContext) is tested by the **browser self-test** in the harness (section 11).
 - `apps/extension/src/types/worklet.d.ts` declares the AudioWorklet globals (`AudioWorkletProcessor`, `registerProcessor`, `sampleRate`, `currentTime`), because the DOM lib does not include them.
-- `pnpm-lock.yaml` is git-ignored during the three-way build so that each person's dependency installs cannot conflict. Role 3 may commit a lock file after everything is integrated.
+- `pnpm-lock.yaml` is git-ignored during the three-way build so that each person's dependency installs cannot conflict. Full-Stack Integration may commit a lock file after everything is integrated.
 - Model and clip files are shared by tarball or Git LFS, never plain git.
 
 ---
 
 ## 6. Package template and asset declaration
 
-Every package under `packages/` follows this shape. A role package is complete when it has all of these. **There is no README in a package**; notes live in `docs/role<N>/` (section 17.5), outside the package.
+Every package under `packages/` follows this shape. A role package is complete when it has all of these. **There is no README in a package**; notes live in `docs/audio-module/` (section 17.5), outside the package.
 
 ```
 packages/<name>/
@@ -477,15 +477,15 @@ Mocks must pass the same self-test as the real modules.
 
 ## 7. Build system and manifest
 
-Owner: Role 3. One script builds everything with esbuild: `scripts/build.mjs`.
+Owner: Full-Stack Integration. One script builds everything with esbuild: `scripts/build.mjs`.
 
 ### 7.1 `scripts/build.mjs`
 The canonical, tested source of `scripts/build.mjs` is in Appendix A. It builds the extension (`pnpm build`) or the harness (`pnpm build:harness`), copies every package's declared assets, and bundles each entry point with esbuild.
 Notes:
-- The extension entry files listed in `scripts/build.mjs` are created by Role 3; Roles 1 and 2 only run the harness build (`pnpm build:harness`).
+- The extension entry files listed in `scripts/build.mjs` are created by Full-Stack Integration; Roles 1 and 2 only run the harness build (`pnpm build:harness`).
 - CSS imported by the popup becomes `popup.css`. CSS for the content-script overlay must be named `*.inline.css`; it is imported as a string and injected into the shadow root.
-- Bundling `onnxruntime-web` with esbuild can be fiddly because it loads its `.wasm` and `.mjs` files at runtime. The rule: set `ort.env.wasm.wasmPaths = assetBase + "ort/"` and copy the files with `sentinel.assets.json` as shown. If esbuild fails on it, Role 1 marks `onnxruntime-web` as external in a small esbuild plugin proposal to Role 3, or loads the pre-built ORT bundle via a dynamic `import(assetBase + "ort/<file>.mjs")`. **Decide this in the first spike.**
-- Multi-threaded WASM needs cross-origin isolation; default to `ort.env.wasm.numThreads = 1` unless Role 1 measures a real gain and Role 3 adds the manifest isolation keys.
+- Bundling `onnxruntime-web` with esbuild can be fiddly because it loads its `.wasm` and `.mjs` files at runtime. The rule: set `ort.env.wasm.wasmPaths = assetBase + "ort/"` and copy the files with `sentinel.assets.json` as shown. If esbuild fails on it, Audio Module marks `onnxruntime-web` as external in a small esbuild plugin proposal to Full-Stack Integration, or loads the pre-built ORT bundle via a dynamic `import(assetBase + "ort/<file>.mjs")`. **Decide this in the first spike.**
+- Multi-threaded WASM needs cross-origin isolation; default to `ort.env.wasm.numThreads = 1` unless Audio Module measures a real gain and Full-Stack Integration adds the manifest isolation keys.
 
 ### 7.2 `scripts/serve.mjs`
 A 20-line static file server (Node `http`) that serves a folder on a port, with correct MIME types for `.wasm`, `.mjs`, `.js`, `.onnx`, `.task`, `.json`, `.html`. Needed because the harness cannot load WASM from `file://`.
@@ -517,7 +517,7 @@ Add placeholder icons to `public/icons/`. Do not add permissions without telling
 
 ---
 
-## 8. Extension runtime wiring (Role 3)
+## 8. Extension runtime wiring (Full-Stack Integration)
 
 ### 8.1 Service worker `apps/extension/src/background/index.ts`
 Responsibilities: start and stop monitoring, own the offscreen document, hold run state in `chrome.storage.session`, and show notifications when asked. It does not process audio or video.
@@ -608,7 +608,7 @@ Start / Stop button (sends `START` with the active tab id, only enabled on `meet
 
 ---
 
-## 9. Pipeline and arbiter specification (Role 3)
+## 9. Pipeline and arbiter specification (Full-Stack Integration)
 
 ### 9.1 `@sentinel/pipeline`
 ```ts
@@ -666,7 +666,7 @@ State machine:
 | CHALLENGE | SUSPICIOUS or CLEAR | verifier `passed` and `artifactScore` low (go to the state matching fused) |
 | ALERT | CLEAR | user dismiss (then `dismissCooldownMs` before a new alert) or fused below `suspicious - hysteresis` for 30 s |
 
-Challenge choice: rotate through `turn_head_left_right`, `cover_half_face`, `raise_fingers` (skip `raise_fingers` if Role 2 reports no hand tracking), never repeat the last one. `ArbiterOutput.reasons` always explains the state in plain words (for example "Voice score high (0.78); lip-sync mismatch (0.71)"), because the demo must explain itself.
+Challenge choice: rotate through `turn_head_left_right`, `cover_half_face`, `raise_fingers` (skip `raise_fingers` if Vision Module reports no hand tracking), never repeat the last one. `ArbiterOutput.reasons` always explains the state in plain words (for example "Voice score high (0.78); lip-sync mismatch (0.71)"), because the demo must explain itself.
 
 Required unit tests (`packages/arbiter/tests`): no data stays CLEAR; sustained high scores escalate in order; flicker around the threshold does not change state (hysteresis); a failed challenge goes to ALERT; a passed challenge de-escalates; dismiss cooldown works.
 
@@ -674,7 +674,7 @@ Required unit tests (`packages/arbiter/tests`): no data stays CLEAR; sustained h
 
 ## 10. Model decision records, test data, evaluation
 
-### 10.1 `MODEL_CARD.md` template (Utkarsh writes `docs/role1/MODEL_CARD.md` for audio and text, Yash writes `docs/role2/MODEL_CARD.md` for vision)
+### 10.1 `MODEL_CARD.md` template (Utkarsh writes `docs/audio-module/MODEL_CARD.md` for audio and text, Yash writes `docs/vision-module/MODEL_CARD.md` for vision)
 Every model-using package fills this in **before** handover. A code generator needs one concrete model, not a list, so decide in the first spike and write it down.
 ```
 Model name and version:
@@ -692,7 +692,7 @@ Known failure cases:
 Alternatives tried and why rejected:
 ```
 
-### 10.2 Audio `assets/meta.json` (Role 1 writes it; the audio package reads it, so the code is model-agnostic)
+### 10.2 Audio `assets/meta.json` (Audio Module writes it; the audio package reads it, so the code is model-agnostic)
 ```json
 {
   "id": "name-of-model",
@@ -711,20 +711,20 @@ Alternatives tried and why rejected:
   "source": "…"
 }
 ```
-`outputKind` is one of `logits2` (two logits, use softmax and `fakeIndex`), `logit1` (one logit, sigmoid, higher = fake), `sigmoid1` (one probability of fake), or `score1_bonafide` (higher = real, the package inverts it). If a model needs log-mel or LFCC features, Role 1 implements them in TypeScript and tests them against Python golden vectors (see the Role 1 doc).
+`outputKind` is one of `logits2` (two logits, use softmax and `fakeIndex`), `logit1` (one logit, sigmoid, higher = fake), `sigmoid1` (one probability of fake), or `score1_bonafide` (higher = real, the package inverts it). If a model needs log-mel or LFCC features, Audio Module implements them in TypeScript and tests them against Python golden vectors (see the Audio Module doc).
 
 ### 10.3 Shared test data
 - **Clips:** at least 10 real and 10 fake, 20-30 s each, mixed audio-only, video-only, and both. Stored in `eval/clips/` (not in git; share by zip or LFS).
-- **Labels:** each role writes its own CSV (`eval/clips/labels/role1.csv`, `role2.csv`) with columns `clip_id,file,speaker,label,tool,has_audio,has_video,notes`. `label` is `real` or `fake`. Role 3's script concatenates them.
-- **Fake generation:** Role 1 makes cloned-voice audio, Role 2 makes face-swapped video. Use only your own faces and voices, or people who have agreed. Never use a real third party.
+- **Labels:** each role writes its own CSV (`eval/clips/labels/audio-eval.csv`, `role2.csv`) with columns `clip_id,file,speaker,label,tool,has_audio,has_video,notes`. `label` is `real` or `fake`. Full-Stack Integration's script concatenates them.
+- **Fake generation:** Audio Module makes cloned-voice audio, Vision Module makes face-swapped video. Use only your own faces and voices, or people who have agreed. Never use a real third party.
 - **Holdout:** keep at least 4 clips (2 real, 2 fake) that nobody tunes on, for the final numbers.
-- Clips used by the browser self-test: one short real speech clip and one blank frame are provided by Role 3; a face image for the vision self-test is provided by Role 2 (`packages/vision-detector/assets/selftest/face.jpg`, a team member who agreed).
+- Clips used by the browser self-test: one short real speech clip and one blank frame are provided by Full-Stack Integration; a face image for the vision self-test is provided by Vision Module (`packages/vision-detector/assets/selftest/face.jpg`, a team member who agreed).
 
 ### 10.4 Metrics to report
 - Audio: accuracy and EER on our clips; behaviour on silence, music, and background noise.
 - Sync: detection rate on fakes and false positive rate on real speech; behaviour when the caller is muted or listening.
 - Challenges: pass rate on real people, fail or high `artifactScore` rate on fakes, per challenge type.
-- End to end (Role 3): accuracy, false alarms per 10 minutes of real calls, time to alert after a fake appears.
+- End to end (Full-Stack Integration): accuracy, false alarms per 10 minutes of real calls, time to alert after a fake appears.
 - Text: precision and false positive rate on a labelled set plus about 20 hand-made examples.
 - Do not report numbers measured on the clips you tuned on.
 
@@ -776,12 +776,12 @@ Fails (exit code 1) with a clear message if:
 - `src/index.ts` does not mention and export the required create function from section 2.2;
 - a dependency version in a package contains `^`, `~`, or `latest` (except `workspace:*`);
 - a role package folder contains **any README file** (the repository has one root README);
-- a non-stub package has no `docs/role<N>/HANDOVER.md`, or no `docs/role<N>/MODEL_CARD.md` where a model is involved (audio, text, vision; Utkarsh is role 1, Yash is role 2);
+- a non-stub package has no `docs/audio-module/HANDOVER.md`, or no `docs/audio-module/MODEL_CARD.md` where a model is involved (audio, text, vision; Utkarsh is role 1, Yash is role 2);
 - `sentinel.assets.json` is not valid JSON, or an asset's `from` does not exist (after `pnpm install`).
 Warns (does not fail) if a package still depends on `@sentinel/mocks`, meaning it is still a stub.
 
 ### 11.4 `scripts/check-privacy.mjs` (canonical source in Appendix A)
-Scans `packages/*/src` and `apps/*/src` (`.ts`, `.tsx`) and fails if it finds, outside comment lines: `fetch(` or `import(` followed by a string literal starting with `http://` or `https://`; `WebSocket`; `XMLHttpRequest`; `sendBeacon`; `EventSource`. An exception list `scripts/privacy-allow.json` exists and only Role 3 may edit it, with a written reason. This makes "nothing leaves your machine" a build-time check, not just a claim. Still verify in the browser Network tab.
+Scans `packages/*/src` and `apps/*/src` (`.ts`, `.tsx`) and fails if it finds, outside comment lines: `fetch(` or `import(` followed by a string literal starting with `http://` or `https://`; `WebSocket`; `XMLHttpRequest`; `sendBeacon`; `EventSource`. An exception list `scripts/privacy-allow.json` exists and only Full-Stack Integration may edit it, with a written reason. This makes "nothing leaves your machine" a build-time check, not just a claim. Still verify in the browser Network tab.
 
 ---
 
@@ -791,8 +791,8 @@ No fixed schedule: each person generates their own part at their own pace, in th
 
 | Milestone | What must be true | Who |
 |---|---|---|
-| **M0: Spikes done** | Role 1 and Role 2 have chosen their models and written a draft `MODEL_CARD.md`; Role 3 has answered the capture and loading questions (Role 3 doc, B2) | All |
-| **M1: Foundations frozen** | Scaffold (Appendix A) in place for everyone, contracts frozen, mock-driven extension runs end to end | Role 3 |
+| **M0: Spikes done** | Audio Module and Vision Module have chosen their models and written a draft `MODEL_CARD.md`; Full-Stack Integration has answered the capture and loading questions (Full-Stack Integration doc, B2) | All |
+| **M1: Foundations frozen** | Scaffold (Appendix A) in place for everyone, contracts frozen, mock-driven extension runs end to end | Full-Stack Integration |
 | **M2: First drop-in** | A first working version (v0, interface-correct even if the model is weak) of each role's packages is handed over to Aditya, dropped in, and the harness self-test is green | All |
 | **M3: Full loop and on GitHub** | Real audio and vision feed the arbiter in the harness: score, state, challenge, alert; then the same on a live Meet call. Aditya writes the root README and pushes the project to GitHub; Utkarsh and Yash clone it | Aditya, with Utkarsh and Yash |
 | **M4: Evidence** | Final versions merged (tarball before M3, pull requests after), holdout evaluation done, arbiter weights and thresholds tuned, benchmark numbers recorded | All |
@@ -824,22 +824,22 @@ Short sync between the three people whenever something is blocked or a contract 
 ### 13.3 Risks
 | Risk | Mitigation | Owner |
 |---|---|---|
-| No usable pre-trained audio model | First spike; fallback to a small model trained on spectral features in Colab | Role 1 |
-| Weak generalization to new voice cloners | Report honestly; rely on sync and challenges | Role 1, Role 3 |
-| ONNX Runtime bundling or WASM loading problems | First spike, asset copy rules, WASM single-thread default | Role 1, Role 3 |
-| Tab capture, offscreen, or autoplay quirks | First spike before anything else | Role 3 |
-| JPEG frame transport too slow | Lower fps or width; measure early | Role 3 |
-| Meet or Gmail DOM changes | Selectors in config files; manual video pick fallback | Role 3 |
-| Lip-sync score too noisy | Longer window, lag search, return `null` when unsure | Role 2 |
-| Good face-swaps pass the challenges | Stronger challenges (large yaw, hand occlusion); report honestly | Role 2 |
-| Packages do not fit together | Fixed contracts, stubs, self-test, check scripts | Role 3 |
+| No usable pre-trained audio model | First spike; fallback to a small model trained on spectral features in Colab | Audio Module |
+| Weak generalization to new voice cloners | Report honestly; rely on sync and challenges | Audio Module, Full-Stack Integration |
+| ONNX Runtime bundling or WASM loading problems | First spike, asset copy rules, WASM single-thread default | Audio Module, Full-Stack Integration |
+| Tab capture, offscreen, or autoplay quirks | First spike before anything else | Full-Stack Integration |
+| JPEG frame transport too slow | Lower fps or width; measure early | Full-Stack Integration |
+| Meet or Gmail DOM changes | Selectors in config files; manual video pick fallback | Full-Stack Integration |
+| Lip-sync score too noisy | Longer window, lag search, return `null` when unsure | Vision Module |
+| Good face-swaps pass the challenges | Stronger challenges (large yaw, hand occlusion); report honestly | Vision Module |
+| Packages do not fit together | Fixed contracts, stubs, self-test, check scripts | Full-Stack Integration |
 | Live fake setup fails on demo day | Recorded fallback is mandatory | All |
 
 ---
 
 ## 14. Demo
 
-- **Primary:** Role 3 runs Meet and the extension on the demo laptop; a teammate joins from a second device as the fake caller (face swap from Role 2, voice from Role 1).
+- **Primary:** Full-Stack Integration runs Meet and the extension on the demo laptop; a teammate joins from a second device as the fake caller (face swap from Vision Module, voice from Audio Module).
 - **Fallback (mandatory, recorded before the freeze (M5)):** a pre-recorded fake session played as the caller.
 - **Script (about 3 minutes):** real caller shows `CLEAR`; the fake caller turns `SUSPICIOUS`; a challenge appears; the fake breaks under it; `ALERT`; then a Gmail phishing example; then the latency numbers and the Network tab showing no uploads.
 - Fakes only use your own faces and voices or people who agreed.
@@ -848,7 +848,7 @@ Short sync between the three people whenever something is blocked or a contract 
 
 ## 15. Deployment
 
-There is no server to deploy. The extension is the product, so "deploying" means building the extension package and distributing it. **Owner: Role 3**, with Roles 1 and 2 supplying model licence details and privacy-text inputs.
+There is no server to deploy. The extension is the product, so "deploying" means building the extension package and distributing it. **Owner: Full-Stack Integration**, with Roles 1 and 2 supplying model licence details and privacy-text inputs.
 
 ### 15.1 Distribution channels (they stack)
 
@@ -940,12 +940,12 @@ Each role doc starts with a **START HERE** block containing the exact prompt to 
 3. Write only inside your owned paths (section 2). Run `node scripts/check-ownership.mjs <role>` before finishing (Roles 1 and 2). It must pass.
 4. Implement only the interfaces in `@sentinel/contracts`; use the exact export names in section 2.2.
 5. No network calls from source code (section 2.1 rule 5). `pnpm check:privacy` must pass.
-6. Install dependencies with exact versions: `pnpm add -E <package>@<version> --filter <workspace name>`. Never `^`, `~`, or `latest`. Record the versions in `docs/role<N>/HANDOVER.md`.
+6. Install dependencies with exact versions: `pnpm add -E <package>@<version> --filter <workspace name>`. Never `^`, `~`, or `latest`. Record the versions in `docs/audio-module/HANDOVER.md`.
 7. Do not guess library APIs or model details. Read the installed package's type definitions and README in `node_modules`, or the official documentation if you have web access. If you still cannot confirm something, say so in the final report and write the code so the uncertain part is isolated and easy to fix.
 8. Do not use shell brace expansion (`{a,b}`) or tools that exist only on one operating system. Use plain commands or small Node scripts.
-9. **Never create a README file** in role folders (Roles 1 and 2). Everything you generated is explained in `docs/role<N>/HANDOVER.md` and `docs/role<N>/MODEL_CARD.md` (template in 17.5). Role 3 writes the single root `README.md`.
+9. **Never create a README file** in role folders (Roles 1 and 2). Everything you generated is explained in `docs/audio-module/HANDOVER.md` and `docs/audio-module/MODEL_CARD.md` (template in 17.5). Full-Stack Integration writes the single root `README.md`.
 10. Never claim more than was measured. Anything you could not measure goes into the final report as "not measured".
-11. If `pnpm install` or `pnpm add` fails with `ERR_PNPM_IGNORED_BUILDS` for a dependency you added, do **not** edit `pnpm-workspace.yaml` (it is a scaffold file). Use `pnpm install --ignore-scripts` instead (tested: it exits cleanly and esbuild still works), and list the package in your final report under "Scaffold additions needed" so Role 3 can add `allowBuilds: <package>: false` to the workspace file.
+11. If `pnpm install` or `pnpm add` fails with `ERR_PNPM_IGNORED_BUILDS` for a dependency you added, do **not** edit `pnpm-workspace.yaml` (it is a scaffold file). Use `pnpm install --ignore-scripts` instead (tested: it exits cleanly and esbuild still works), and list the package in your final report under "Scaffold additions needed" so Full-Stack Integration can add `allowBuilds: <package>: false` to the workspace file.
 
 ### 17.2 When to stop and ask the human (only these cases)
 - A scaffold file fails or conflicts and the fix is not obvious (do not edit it).
@@ -963,18 +963,18 @@ FINAL REPORT (Role N)
 5. Not measured / not verified: (include anything that needs a real browser, real models, or real clips)
 6. Human steps still needed: (numbered, exact)
 7. Handover file: path of the tarball and the command used to make it
-8. Scaffold additions needed: (dependency install-script decisions, or anything else Role 3 must add; "none" if none)
+8. Scaffold additions needed: (dependency install-script decisions, or anything else Full-Stack Integration must add; "none" if none)
 ```
 
 ### 17.4 Handover checklist (before sending a tarball)
-- [ ] Only owned folders are in the tarball (it includes your `docs/role<N>/` notes).
+- [ ] Only owned folders are in the tarball (it includes your `docs/audio-module/` notes).
 - [ ] `pnpm verify:parts` passes in your copy; `node scripts/check-ownership.mjs <role>` passes.
 - [ ] The harness self-test results (table or screenshot) are included, or the report says why not.
-- [ ] `docs/role<N>/HANDOVER.md` and `docs/role<N>/MODEL_CARD.md` are complete; versions are pinned; no README anywhere in your folders.
+- [ ] `docs/audio-module/HANDOVER.md` and `docs/audio-module/MODEL_CARD.md` are complete; versions are pinned; no README anywhere in your folders.
 - [ ] `assets/` contains every file named in `sentinel.assets.json`.
-- [ ] Known limitations and recommended thresholds are written down for Role 3.
+- [ ] Known limitations and recommended thresholds are written down for Full-Stack Integration.
 
-### 17.5 `docs/role<N>/HANDOVER.md` template (Utkarsh and Yash)
+### 17.5 `docs/audio-module/HANDOVER.md` template (Utkarsh and Yash)
 ```
 # Role <N> handover (<date>, version v0 / v1 / final)
 1. What I built: (packages and what each does, in plain words)
@@ -997,10 +997,10 @@ FINAL REPORT (Role N)
 ### 18.1 Prerequisites (everyone)
 - Node 20.11 or newer, Chrome 116 or newer, Git. (The scaffold was tested with Node 22 and pnpm 12.)
 - pnpm: `corepack enable` then `corepack prepare pnpm@latest --activate` (or `npm i -g pnpm`).
-- Python 3.10+ for Role 1 and Role 2 (Colab notebooks and eval scripts).
+- Python 3.10+ for Audio Module and Vision Module (Colab notebooks and eval scripts).
 - Windows: use PowerShell or WSL; every command below works in either unless noted.
 
-### 18.2 Role 3: set up the project
+### 18.2 Full-Stack Integration: set up the project
 Create the scaffold from Appendix A (the agent does this from the doc), then:
 ```bash
 node scripts/make-stubs.mjs        # creates the five stub role packages
@@ -1008,7 +1008,7 @@ pnpm install
 pnpm verify:parts                  # must pass before you generate anything
 git init -b main && git add -A && git commit -m scaffold && git tag scaffold-baseline
 ```
-Create the other Role 3 packages and apps (`packages/arbiter`, `packages/pipeline`, `apps/extension`) with the generation order in the Role 3 doc. For each new workspace package, give it a `package.json` with its `@sentinel/...` name and `workspace:*` dependencies (for example `"@sentinel/contracts": "workspace:*"`), then run `pnpm install` so the links are created.
+Create the other Full-Stack Integration packages and apps (`packages/arbiter`, `packages/pipeline`, `apps/extension`) with the generation order in the Full-Stack Integration doc. For each new workspace package, give it a `package.json` with its `@sentinel/...` name and `workspace:*` dependencies (for example `"@sentinel/contracts": "workspace:*"`), then run `pnpm install` so the links are created.
 Day-to-day:
 ```bash
 pnpm test                          # all vitest tests (pure logic)
@@ -1022,7 +1022,7 @@ pnpm verify                        # integration check + privacy check + typeche
 Load the extension: open `chrome://extensions`, turn on Developer mode, choose **Load unpacked**, select `apps/extension/dist`. After each rebuild press the reload icon on the extension card.
 Debug views (all from `chrome://extensions`): the **service worker** link on the extension card; the popup by right-clicking its icon and choosing Inspect popup; the offscreen page from the card's **Inspect views** list (or `chrome://inspect/#other`); the content scripts in the Meet or Gmail tab's DevTools console (choose the extension's context in the console dropdown).
 
-### 18.3 Role 1 and Role 2: setup
+### 18.3 Audio Module and Vision Module: setup
 The agent does this from Appendix A. By hand:
 ```bash
 # 1. create the Appendix A files, then:
@@ -1031,7 +1031,7 @@ pnpm install
 pnpm verify:parts                  # passes with five "still a stub" warnings
 git init -b main && git add -A && git commit -m scaffold && git tag scaffold-baseline
 ```
-Then replace only **your** stub folders (Role 1 example) and add your pinned dependency:
+Then replace only **your** stub folders (Audio Module example) and add your pinned dependency:
 ```bash
 rm -rf packages/audio-detector packages/text-classifier        # Windows PowerShell: Remove-Item -Recurse -Force packages/audio-detector, packages/text-classifier
 # generate your real folders (agent or by hand; each needs a package.json named @sentinel/<folder> with workspace:* dependency on @sentinel/contracts), then:
@@ -1042,8 +1042,8 @@ pnpm verify:parts
 node scripts/check-ownership.mjs 1
 pnpm harness                                         # open http://localhost:5173, press "Run self-test"
 ```
-Role 2 equivalent: `pnpm add -E @mediapipe/tasks-vision@<EXACT-VERSION> --filter @sentinel/vision-detector`.
-Python side (Role 1 and Role 2, outside the build):
+Vision Module equivalent: `pnpm add -E @mediapipe/tasks-vision@<EXACT-VERSION> --filter @sentinel/vision-detector`.
+Python side (Audio Module and Vision Module, outside the build):
 ```bash
 python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\Activate.ps1
 pip install numpy scipy onnx onnxruntime            # plus torch, librosa, soundfile as your notebooks need
@@ -1052,14 +1052,14 @@ pip install numpy scipy onnx onnxruntime            # plus torch, librosa, sound
 ### 18.4 Phase 1 handover: pack your folders (Utkarsh and Yash)
 `tar` ships with macOS, Linux, and Windows 10+. Run from the repo root.
 ```bash
-# Role 1
-tar -czf role1-$(date +%Y%m%d).tgz --exclude=node_modules \
+# Audio Module
+tar -czf audio-module-$(date +%Y%m%d).tgz --exclude=node_modules \
   packages/audio-detector packages/text-classifier colab/audio colab/text eval/audio eval/text \
-  eval/clips/labels/role1.csv docs/role1
-# Role 2
-tar -czf role2-$(date +%Y%m%d).tgz --exclude=node_modules \
+  eval/clips/labels/audio-eval.csv docs/role1
+# Vision Module
+tar -czf vision-module-$(date +%Y%m%d).tgz --exclude=node_modules \
   packages/vision-detector packages/sync-detector packages/challenge-verifier colab/vision eval/vision \
-  eval/clips/labels/role2.csv docs/role2
+  eval/clips/labels/vision-eval.csv docs/role2
 ```
 Windows PowerShell: replace `$(date +%Y%m%d)` with `$(Get-Date -Format yyyyMMdd)`. If `eval/clips` media files are large, send them separately (shared drive); do not pack them in the tarball.
 Before packing, run `pnpm verify:parts` and `node scripts/check-ownership.mjs <role>`, and keep the harness self-test screenshot.
@@ -1068,7 +1068,7 @@ Before packing, run `pnpm verify:parts` and `node scripts/check-ownership.mjs <r
 ```bash
 # from the repo root, with the handover file next to it
 rm -rf packages/audio-detector packages/text-classifier        # only the folders that this handover replaces (PowerShell: Remove-Item -Recurse -Force <paths>)
-tar -xzf ../role1-20261018.tgz                                   # restores the owner's folders in place
+tar -xzf ../audio-module-20261018.tgz                                   # restores the owner's folders in place
 pnpm install
 pnpm verify
 pnpm harness                                                     # open it, press "Run self-test", read the table
@@ -1077,14 +1077,14 @@ Then `pnpm build` and load `apps/extension/dist` unpacked for a live Meet check.
 
 ### 18.6 Model-file commands (examples; verify names and versions in the current documentation)
 ```bash
-# Role 2: bundled MediaPipe model files (check the MediaPipe documentation for the current URLs)
+# Vision Module: bundled MediaPipe model files (check the MediaPipe documentation for the current URLs)
 mkdir -p packages/vision-detector/assets
 curl -L -o packages/vision-detector/assets/face_landmarker.task \
   https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
 curl -L -o packages/vision-detector/assets/hand_landmarker.task \
   https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
 ```
-Role 1 export, verification, and quantization snippets are in the Role 1 doc, Part C.
+Audio Module export, verification, and quantization snippets are in the Audio Module doc, Part C.
 
 ### 18.7 Release build
 ```bash
@@ -1097,7 +1097,7 @@ git tag v0.1.0 && git push --tags
 
 **Aditya: first push** (after the full stack works and the root `README.md` is written). Create an **empty** repository on GitHub first (no README, no license, no .gitignore, because the project already has them).
 ```bash
-git add -A && git commit -m "Integrate role 1 and role 2, extension, README"
+git add -A && git commit -m "Integrate Audio and Vision modules, extension, README"
 git branch -M main
 git remote add origin https://github.com/<your-user>/<repo-name>.git
 git push -u origin main
@@ -1116,12 +1116,12 @@ pnpm verify          # needs Node 20.11+ and pnpm; builds the whole extension
 **Utkarsh and Yash: every change.** Work only inside your own folders (section 2).
 ```bash
 git checkout main && git pull
-git checkout -b role1/<topic>       # Yash: role2/<topic>
-# ... make your changes inside your owned folders, update docs/role<N>/HANDOVER.md if behavior changed ...
+git checkout -b audio-module/<topic>       # Yash: vision-module/<topic>
+# ... make your changes inside your owned folders, update docs/audio-module/HANDOVER.md if behavior changed ...
 pnpm verify:parts
 node scripts/check-ownership.mjs 1  # Yash: 2. It compares against where your branch left main.
-git add -A && git commit -m "role1: <what changed and why>"
-git push -u origin role1/<topic>
+git add -A && git commit -m "audio-module: <what changed and why>"
+git push -u origin audio-module/<topic>
 # open a Pull Request into main on GitHub; Aditya reviews and merges
 ```
 After a merge, everyone runs `git checkout main && git pull && pnpm install`.
@@ -1142,7 +1142,7 @@ Everyone who clones then needs Git LFS installed too.
 
 ## Appendix A: Scaffold files (canonical source, tested)
 
-These are the shared files that make the three parts fit together. **Every agent creates all of them, exactly as written.** Role 3 (Aditya) keeps them as the base of the repository; Roles 1 and 2 (Utkarsh and Yash) make their own copy to work against and **never deliver it**. Do not edit any of them. If you think one is wrong, stop and report it instead of changing it.
+These are the shared files that make the three parts fit together. **Every agent creates all of them, exactly as written.** Full-Stack Integration (Aditya) keeps them as the base of the repository; Roles 1 and 2 (Utkarsh and Yash) make their own copy to work against and **never deliver it**. Do not edit any of them. If you think one is wrong, stop and report it instead of changing it.
 
 How to materialize (this is also in each role doc's run book):
 1. Create every file below at its path with exactly the content shown. Create parent folders as needed (do not use shell brace expansion; it does not work in every shell).
@@ -1153,7 +1153,7 @@ How to materialize (this is also in each role doc's run book):
 
 Tested in a sandbox with Node 22 and pnpm 12: steps 1-4 pass, and the pack/unpack handover commands and the clone-and-branch ownership check work against a local remote. The harness page itself could not be opened in a browser in that sandbox, so its first run in Chrome is part of your own verification.
 
-There is **one README in the whole repository** (`README.md` at the root, written by Role 3). Role packages have none.
+There is **one README in the whole repository** (`README.md` at the root, written by Full-Stack Integration). Role packages have none.
 
 ### A.1 `package.json`
 ```json
@@ -1247,7 +1247,7 @@ eval/clips/**/*.wav
 
 Chrome extension that warns about deepfake voices and faces on Google Meet calls and flags phishing emails in Gmail. Everything runs in the browser.
 
-This file is the **only README in the repository**. It is written and maintained by Role 3 (Aditya). Notes from Role 1 (Utkarsh) and Role 2 (Yash) live in `docs/role1/` and `docs/role2/`. The design is in `docs/00-master-integration-doc.md`.
+This file is the **only README in the repository**. It is written and maintained by Full-Stack Integration (Aditya). Notes from Audio Module (Utkarsh) and Vision Module (Yash) live in `docs/audio-module/` and `docs/vision-module/`. The design is in `docs/00-master-integration-doc.md`.
 ```
 
 ### A.8 `scripts/build.mjs`
@@ -1419,7 +1419,7 @@ for (const [dir, { fn, role, card }] of Object.entries(REQUIRED)) {
     const src = await readFile(idx, "utf8");
     if (!src.includes(fn) || !/\bexport\b/.test(src)) fail(`${dir}: src/index.ts must export ${fn}`);
   }
-  // One repository, one README (the root one, owned by Role 3). Role packages must not have their own.
+  // One repository, one README (the root one, owned by Full-Stack Integration). Role packages must not have their own.
   for (const r of await readmes(base)) fail(`${dir}: remove ${path.relative(root, r)} (the repo has a single root README; put notes in docs/role${role}/HANDOVER.md)`);
   if (!isStub) {
     const notes = path.join(root, "docs", `role${role}`);
@@ -1484,7 +1484,7 @@ for (const top of ["packages", "apps"]) {
     });
   }
 }
-if (failures) { console.error(`\n${failures} privacy problem(s). Remove the call, or Role 3 adds a justified entry to scripts/privacy-allow.json.`); process.exit(1); }
+if (failures) { console.error(`\n${failures} privacy problem(s). Remove the call, or Full-Stack Integration adds a justified entry to scripts/privacy-allow.json.`); process.exit(1); }
 console.log("Privacy check passed: no outbound network calls found in source.");
 ```
 
@@ -1497,10 +1497,10 @@ import { execSync } from "node:child_process";
 
 const role = process.argv[2];
 const OWN = {
-  "1": ["packages/audio-detector/", "packages/text-classifier/", "colab/audio/", "colab/text/", "eval/audio/", "eval/text/", "eval/clips/labels/role1.csv", "docs/role1/"],
-  "2": ["packages/vision-detector/", "packages/sync-detector/", "packages/challenge-verifier/", "colab/vision/", "eval/vision/", "eval/clips/labels/role2.csv", "docs/role2/"],
+  "1": ["packages/audio-detector/", "packages/text-classifier/", "colab/audio/", "colab/text/", "eval/audio/", "eval/text/", "eval/clips/labels/audio-eval.csv", "docs/audio-module/"],
+  "2": ["packages/vision-detector/", "packages/sync-detector/", "packages/challenge-verifier/", "colab/vision/", "eval/vision/", "eval/clips/labels/vision-eval.csv", "docs/vision-module/"],
 };
-if (!OWN[role]) { console.error("Usage: node scripts/check-ownership.mjs <1|2>   (Role 3 owns everything else and is not checked)"); process.exit(2); }
+if (!OWN[role]) { console.error("Usage: node scripts/check-ownership.mjs <1|2>   (Full-Stack Integration owns everything else and is not checked)"); process.exit(2); }
 
 const sh = (c) => execSync(c, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).split("\n").map((s) => s.trim()).filter(Boolean);
 function baseRef() {
@@ -1608,13 +1608,13 @@ export interface InitOptions {
 
 /** Where assets are placed in dist (see sentinel.assets.json in each package). */
 export const ASSET_PATHS = {
-  audioModelDir: "models/audio/",   // model.onnx + meta.json (Role 1)
-  visionModelDir: "models/vision/", // face_landmarker.task (+ optional hand_landmarker.task) (Role 2)
-  ortDir: "ort/",                   // onnxruntime-web .wasm/.mjs files (Role 1)
-  mediapipeWasmDir: "mediapipe/wasm/", // @mediapipe/tasks-vision wasm files (Role 2)
+  audioModelDir: "models/audio/",   // model.onnx + meta.json (Audio Module)
+  visionModelDir: "models/vision/", // face_landmarker.task (+ optional hand_landmarker.task) (Vision Module)
+  ortDir: "ort/",                   // onnxruntime-web .wasm/.mjs files (Audio Module)
+  mediapipeWasmDir: "mediapipe/wasm/", // @mediapipe/tasks-vision wasm files (Vision Module)
 } as const;
 
-// ---------- Role 1: audio ----------
+// ---------- Audio Module: audio ----------
 export interface AudioResult {
   windowStartMs: Ms;
   windowEndMs: Ms;
@@ -1631,7 +1631,7 @@ export interface AudioDetector {
   dispose(): void;        // safe to call twice
 }
 
-// ---------- Role 1: text ----------
+// ---------- Audio Module: text ----------
 export interface EmailInput {
   subject: string;
   bodyText: string;
@@ -1653,7 +1653,7 @@ export interface TextClassifier {
   classify(e: EmailInput): Promise<TextResult>;
 }
 
-// ---------- Role 2: vision ----------
+// ---------- Vision Module: vision ----------
 export interface FrameResult {
   tsMs: Ms;
   faceFound: boolean;
@@ -1705,7 +1705,7 @@ export interface ChallengeVerifier {
   cancel(): void;
 }
 
-// ---------- Role 3: arbiter ----------
+// ---------- Full-Stack Integration: arbiter ----------
 export type ArbiterState = "CLEAR" | "SUSPICIOUS" | "CHALLENGE" | "ALERT";
 export interface ArbiterOutput {
   tsMs: Ms;

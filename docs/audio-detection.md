@@ -1,16 +1,16 @@
-# ROLE 1: Machine Learning (Audio Detective + Phishing Text)
+# AUDIO DETECTION MODULE: Machine Learning (Audio Detective + Phishing Text)
 
 Owner: Utkarsh
 Read first: `00-master-integration-doc.md` (contracts in section 4 are binding).
 
-## START HERE: generate Role 1 with a coding agent
+## START HERE: generate Audio Module with a coding agent
 
-1. Make an empty folder (for example `sentinel-role1/`). Inside it create `docs/` and put two files there: `00-master-integration-doc.md` and `01-role1-ml-audio.md`.
+1. Make an empty folder (for example `sentinel/`). Inside it create `docs/` and put two files there: `00-master-integration-doc.md` and `01-audio-module-ml-audio.md`.
 2. Open a coding agent (Claude Code, Cursor agent, or similar) in that folder and allow it to run shell commands.
 3. Fill in the **decision inputs** below (leave a line blank and the agent chooses a safe default and records it).
 4. Paste the prompt below, and nothing else.
-5. When the agent finishes, read its FINAL REPORT, do the human steps it lists, and send the tarball it made (`role1-<date>.tgz`) to **Aditya (Role 3)**. You do not create a repository.
-6. Later, Aditya pushes the whole project to GitHub. Then you clone it and continue on branches (`role1/<topic>`) with pull requests, inside your own folders only (master doc sections 0 and 18.8).
+5. When the agent finishes, read its FINAL REPORT, do the human steps it lists, and send the tarball it made (`audio-module-<date>.tgz`) to **Aditya (Full-Stack Integration)**. You do not create a repository.
+6. Later, Aditya pushes the whole project to GitHub. Then you clone it and continue on branches (`audio-module/<topic>`) with pull requests, inside your own folders only (master doc sections 0 and 18.8).
 
 ### Decision inputs (edit before you paste; blank means "agent decides and records it")
 ```
@@ -22,26 +22,26 @@ Phishing dataset you are allowed to use (name/path), or blank for rules-only:
 
 ### The prompt (paste exactly; the lines above are filled in by you, the agent reads them from this document)
 ```
-You are a coding agent working in an empty folder. docs/00-master-integration-doc.md and docs/01-role1-ml-audio.md
+You are a coding agent working in an empty folder. docs/00-master-integration-doc.md and docs/01-audio-module-ml-audio.md
 describe the Sentinel project (a Chrome extension that detects deepfake voices and faces, and phishing emails, entirely
-inside the browser). You are generating ROLE 1: the audio detector and the phishing text classifier.
+inside the browser). You are generating AUDIO DETECTION MODULE: the audio detector and the phishing text classifier.
 Work autonomously. Do not ask me questions except in the cases listed in master doc section 17.2.
 Follow the rules in master doc section 17.1 and finish with the final report in section 17.3.
 
 Steps:
-1. Read both documents completely, including the decision inputs at the top of the Role 1 document.
+1. Read both documents completely, including the decision inputs at the top of the Audio Module document.
 2. Create the scaffold exactly as in master doc Appendix A (all files, no edits). Then run:
    node scripts/make-stubs.mjs ; pnpm install ; pnpm verify:parts ; git init -b main && git add -A && git commit -m scaffold && git tag scaffold-baseline
    pnpm verify:parts must pass before you continue.
-3. Generate Role 1's deliverables as specified in Part B of the Role 1 document (B1 file list, B3 audio algorithm,
+3. Generate Audio Module's deliverables as specified in Part B of the Audio Module document (B1 file list, B3 audio algorithm,
    B4 feature parity if the model needs it, B5 tests, B6 text classifier, B7 colab/eval layout), in the order of B9.
    Replace the stub folders packages/audio-detector and packages/text-classifier completely (same folder and package names).
-4. Model: if the decision inputs name an audio model, follow B2, fill docs/role1/MODEL_CARD.md and assets/meta.json for it.
+4. Model: if the decision inputs name an audio model, follow B2, fill docs/audio-module/MODEL_CARD.md and assets/meta.json for it.
    If blank, create the PLACEHOLDER model with the script in Part C1b (colab/audio/make_placeholder_model.py) so the package
-   works end to end. Label the placeholder clearly in docs/role1/HANDOVER.md, docs/role1/MODEL_CARD.md, and the meta.json id, and write
-   the exact steps to swap in a real model. Do NOT create any README file anywhere; notes go in docs/role1/ only.
+   works end to end. Label the placeholder clearly in docs/audio-module/HANDOVER.md, docs/audio-module/MODEL_CARD.md, and the meta.json id, and write
+   the exact steps to swap in a real model. Do NOT create any README file anywhere; notes go in docs/audio-module/ only.
 5. After each package run: pnpm vitest run packages/<name> and then pnpm verify:parts. Fix failures before moving on.
-6. When done: node scripts/check-ownership.mjs 1 must pass. Pack the handover with the Role 1 command in master doc 18.4.
+6. When done: node scripts/check-ownership.mjs 1 must pass. Pack the handover with the Audio Module command in master doc 18.4.
 7. Print the FINAL REPORT (master doc 17.3). In section 6 list the human steps: open the harness in Chrome and run the
    self-test (pnpm harness), make real and fake clips, replace the placeholder model if one was used, send the tarball.
 ```
@@ -55,7 +55,7 @@ Build the part of the system that decides whether a voice is real or AI-generate
 You deliver two packages and some model files:
 - `packages/audio-detector` implementing `AudioDetector`
 - `packages/text-classifier` implementing `TextClassifier`
-- Model files in `packages/audio-detector/assets/` (`model.onnx`, `meta.json`), declared in each package's `sentinel.assets.json`, plus `docs/role1/MODEL_CARD.md` (master doc section 10.1)
+- Model files in `packages/audio-detector/assets/` (`model.onnx`, `meta.json`), declared in each package's `sentinel.assets.json`, plus `docs/audio-module/MODEL_CARD.md` (master doc section 10.1)
 - Evaluation scripts in `eval/scripts/` for audio and text
 - Voice-clone fake clips for the shared test set
 
@@ -92,7 +92,7 @@ Candidates for a pre-trained anti-spoofing model: AASIST, RawNet2, or a small wa
 Record results in a small table. If nothing works in the first spike, switch to the fallback: a lighter model trained on spectral features (for example log-mel or LFCC) or a small CNN you train yourself on Colab. Tell the team immediately so the plan can adapt.
 
 ### Step B: browser pipeline
-- Input arrives as mono Float32 PCM at 16 kHz (Role 3 resamples). Do not resample yourself unless the master doc changes.
+- Input arrives as mono Float32 PCM at 16 kHz (Full-Stack Integration resamples). Do not resample yourself unless the master doc changes.
 - Window and hop come from config (start with about 2-4 s window, 50% overlap, or whatever the model needs).
 - Do feature extraction (for example log-mel) in TypeScript or inside the ONNX graph. Test that your browser features match your Python features within a small tolerance. **This mismatch is the most common bug.** Write a unit test that compares them on a fixed clip.
 - Run inference on the offscreen document's main thread first (it is a hidden page, separate from the Meet tab). Move to a Web Worker only if you measure jank.
@@ -105,9 +105,9 @@ Record results in a small table. If nothing works in the first spike, switch to 
 
 ### Step D: evaluate honestly
 - Build or collect an evaluation set. Use public datasets for sanity checks (for example the ASVspoof family, subject to their licence), plus **our own clips** made with the cloning tool we will actually use in the demo.
-- Report accuracy and EER, and a threshold recommendation for Role 3.
+- Report accuracy and EER, and a threshold recommendation for Full-Stack Integration.
 - Expect poor generalization to new cloning tools. Measure it and report it. Do not hide it.
-- Give Role 3 a recommended threshold range, and a note on which clips fail and why.
+- Give Full-Stack Integration a recommended threshold range, and a note on which clips fail and why.
 
 ## 4. Phishing text classifier: plan
 
@@ -127,37 +127,37 @@ You make the fake audio the team needs for testing and the demo.
 - Check tool setup and licences yourself (first spike). Options include a real-time voice changer routed through a virtual audio cable, or pre-generated cloned speech.
 - Produce at least 10 labelled fake clips and 10 real clips (20-30 s each) with the same speaker, with varied sentences including plosive sounds like "P" and "B".
 - Add each to `eval/clips/labels.csv` (clip id, who, real/fake, tool, modality).
-- Save the best live-demo audio setup as a short section in `docs/role1/HANDOVER.md` so the demo can be repeated.
+- Save the best live-demo audio setup as a short section in `docs/audio-module/HANDOVER.md` so the demo can be repeated.
 
-## 6. Order of work for Role 1
+## 6. Order of work for Audio Module
 
 Work through these in order at your own pace. The master doc (section 12) says which milestone each step feeds.
 
 | Step | Task | Done when |
 |---|---|---|
-| 1 | Model candidates, licence check, ONNX export, runs in Colab and in the browser | Decision made and draft `docs/role1/MODEL_CARD.md` shared (M0) |
+| 1 | Model candidates, licence check, ONNX export, runs in Colab and in the browser | Decision made and draft `docs/audio-module/MODEL_CARD.md` shared (M0) |
 | 2 | `audio-detector` v0 behind the interface, with the silence gate | Harness self-test green for audio (M2, first handover) |
 | 3 | Browser/Python feature parity test, first eval on clips, threshold | Scores separate real vs fake on your clips |
 | 4 | Quantization and speed table, text classifier v0 | Latency table filled (second handover, v1) |
 | 5 | Fix issues found on a live Meet call | Works on a live call |
 | 6 | Finish the text classifier, or cut it | Cut/keep decided |
-| 7 | Voice-clone fakes, holdout evaluation | Numbers handed to Role 3 (final handover, M4) |
+| 7 | Voice-clone fakes, holdout evaluation | Numbers handed to Full-Stack Integration (final handover, M4) |
 | 8 | Demo rehearsal, fallback recording | Fallback audio saved (M5) |
 
-## 7. Handoff checklist (what Role 3 and the team need from you)
+## 7. Handoff checklist (what Full-Stack Integration and the team need from you)
 
 - [ ] Harness self-test is green for `audio` and `text` (master doc section 11.2); `pnpm verify:parts` passes.
-- [ ] `assets/` holds every file named in `sentinel.assets.json`; `docs/role1/MODEL_CARD.md` and `meta.json` complete (master doc sections 10.1, 10.2).
+- [ ] `assets/` holds every file named in `sentinel.assets.json`; `docs/audio-module/MODEL_CARD.md` and `meta.json` complete (master doc sections 10.1, 10.2).
 - [ ] Recommended `scoreFake` thresholds and confidence behaviour documented.
 - [ ] Latency table (model, precision, backend, ms/window).
 - [ ] Eval report: dataset sizes, accuracy, EER, failure cases.
 - [ ] `TextClassifier` example inputs and expected outputs.
-- [ ] Voice-clone setup notes (in `docs/role1/HANDOVER.md`) and fallback audio.
+- [ ] Voice-clone setup notes (in `docs/audio-module/HANDOVER.md`) and fallback audio.
 
 ## 8. Things to ask other roles
 
-- Role 3: exact audio capture format, chunk size, and clock source. Request a harness clip player early.
-- Role 2: agree on how audio energy is computed for the sync score (Role 3 computes it, you just need to know it is the same stream).
+- Full-Stack Integration: exact audio capture format, chunk size, and clock source. Request a harness clip player early.
+- Vision Module: agree on how audio energy is computed for the sync score (Full-Stack Integration computes it, you just need to know it is the same stream).
 
 ## 9. Risks specific to you
 
@@ -196,8 +196,8 @@ packages/text-classifier/
   src/index.ts          exports createTextClassifier()
   src/rules.ts  src/tokenize.ts  src/model.ts  src/weights.json
   tests/*.test.ts
-colab/audio/   colab/text/     eval/audio/   eval/text/   eval/clips/labels/role1.csv
-docs/role1/HANDOVER.md   docs/role1/MODEL_CARD.md       (the only documentation: NO README anywhere in your folders)
+colab/audio/   colab/text/     eval/audio/   eval/text/   eval/clips/labels/audio-eval.csv
+docs/audio-module/HANDOVER.md   docs/audio-module/MODEL_CARD.md       (the only documentation: NO README anywhere in your folders)
 ```
 
 `sentinel.assets.json` for audio:
@@ -215,7 +215,7 @@ For each candidate (AASIST, RawNet2, a small wav2vec-style detector, or a spectr
 | Candidate | Checkpoint exists? | Licence allows redistribution? | Exports to ONNX? | Runs in onnxruntime-web (WASM)? | WebGPU? | Size | ms per window | Notes |
 |---|---|---|---|---|---|---|---|---|
 
-Pick **one**, write `docs/role1/MODEL_CARD.md` and `assets/meta.json` (master doc sections 10.1 and 10.2), and tell the team right away. If nothing runs in the browser in the first spike, choose the fallback and say so at M1.
+Pick **one**, write `docs/audio-module/MODEL_CARD.md` and `assets/meta.json` (master doc sections 10.1 and 10.2), and tell the team right away. If nothing runs in the browser in the first spike, choose the fallback and say so at M1.
 
 ## B3. Algorithm specification (audio)
 
@@ -245,7 +245,7 @@ Pick **one**, write `docs/role1/MODEL_CARD.md` and `assets/meta.json` (master do
 - `score1_bonafide`: `scoreFake = 1 - value`.
 Clamp to [0, 1]; replace `NaN` with a result of `confidence: 0`.
 
-**Confidence:** `confidence = gate * margin` where `gate = min(1, speechRatio / 0.6)` and `margin = min(1, |scoreFake - thresholdFake| / 0.25)`. Document this in `docs/role1/HANDOVER.md`; Aditya (Role 3) will weight by it.
+**Confidence:** `confidence = gate * margin` where `gate = min(1, speechRatio / 0.6)` and `margin = min(1, |scoreFake - thresholdFake| / 0.25)`. Document this in `docs/audio-module/HANDOVER.md`; Aditya (Full-Stack Integration) will weight by it.
 
 **Latency:** measure with `performance.now()` around feature extraction plus inference. Report that as `latencyMs`.
 
@@ -258,7 +258,7 @@ Clamp to [0, 1]; replace `NaN` with a result of `confidence: 0`.
 This is the most common bug. Required:
 1. A Python script `colab/audio/make_golden.py` that takes a fixed 4 s clip, runs your **training-time** feature extraction, and writes `tests/golden/input.f32` (raw samples), `tests/golden/features.f32`, and `tests/golden/meta.json` (shape, parameters).
 2. A vitest test that runs `features.ts` on `input.f32` and compares with `features.f32` using a tolerance (start with max absolute error 1e-3, relative to the feature range) and fails with the worst index and value.
-3. State the feature parameters (FFT size, hop, mel bins, window, normalization) in `docs/role1/MODEL_CARD.md`.
+3. State the feature parameters (FFT size, hop, mel bins, window, normalization) in `docs/audio-module/MODEL_CARD.md`.
 
 ## B5. Tests you must write (vitest, node, pure logic)
 
@@ -289,7 +289,7 @@ Rule signals (each fires at most once; `points` are starting values to tune):
 | Shouting subject | mostly capital letters or many exclamation marks | 0.05 |
 
 Combine rule points: `ruleRisk = 1 - Π(1 - points_i)`.
-Small model: TF-IDF plus logistic regression trained on a phishing dataset you are allowed to use; export vocabulary and weights to `src/weights.json`; `modelProb` is its output. If you cannot train one in time, set `modelProb = 0` and ship rules only (say so in `docs/role1/HANDOVER.md`).
+Small model: TF-IDF plus logistic regression trained on a phishing dataset you are allowed to use; export vocabulary and weights to `src/weights.json`; `modelProb` is its output. If you cannot train one in time, set `modelProb = 0` and ship rules only (say so in `docs/audio-module/HANDOVER.md`).
 Final: `risk = 1 - (1 - ruleRisk) * (1 - 0.6 * modelProb)`. Labels: `risk < 0.35` is `safe`, `< 0.65` is `suspicious`, else `phishing`.
 `reasons`: one short plain sentence per fired rule (for example "The link text says paypal.com but goes to paypa1-secure.net"), strongest first, at most 4.
 Known-brand list and the shortener list live in `src/rules.ts` as constants.
@@ -305,17 +305,17 @@ colab/audio/make_golden.py            golden vectors (B4)
 eval/audio/run_eval.py                runs the model on eval/clips, writes eval/audio/results.csv
 eval/audio/report.md                  accuracy, EER, failure cases, recommended threshold
 ```
-`results.csv` columns: `clip_id,label,score_fake,confidence`. Role 3 uses it to tune weights.
+`results.csv` columns: `clip_id,label,score_fake,confidence`. Full-Stack Integration uses it to tune weights.
 
 ## B8. Acceptance criteria (you are done when all are true)
 
 - [ ] `pnpm verify:parts` passes with your folders in place.
 - [ ] Browser self-test is green for `audio` and `text`.
 - [ ] Median latency per window at or under 300 ms on the demo laptop (or documented why not, with the table of options tried).
-- [ ] `docs/role1/HANDOVER.md` (template in master doc 17.5) and `docs/role1/MODEL_CARD.md` and `meta.json` complete; `assets/` has every file in `sentinel.assets.json`.
+- [ ] `docs/audio-module/HANDOVER.md` (template in master doc 17.5) and `docs/audio-module/MODEL_CARD.md` and `meta.json` complete; `assets/` has every file in `sentinel.assets.json`.
 - [ ] Eval report on your clips with a recommended threshold range, plus honest failure cases.
 - [ ] No network calls (`pnpm check:privacy` passes).
-- [ ] 10+ real and 10+ fake clips made and listed in `labels/role1.csv`, including words with "P" and "B" sounds, and a fallback recording for the demo.
+- [ ] 10+ real and 10+ fake clips made and listed in `labels/audio-eval.csv`, including words with "P" and "B" sounds, and a fallback recording for the demo.
 
 ## B9. Generation order (the agent works through these in order, running tests after each step)
 
@@ -326,7 +326,7 @@ eval/audio/report.md                  accuracy, EER, failure cases, recommended 
 5. `features.ts` and the golden-vector test (only if needed).
 6. `ort.ts` (session, backend fallback, warm-up).
 7. `detector.ts` and `index.ts` wiring, with an injected fake session for tests.
-8. `docs/role1/HANDOVER.md`, `docs/role1/MODEL_CARD.md`, `sentinel.assets.json` (no README).
+8. `docs/audio-module/HANDOVER.md`, `docs/audio-module/MODEL_CARD.md`, `sentinel.assets.json` (no README).
 9. Text classifier: `rules.ts`, `tokenize.ts`, `model.ts`, `index.ts`, tests.
 10. Run `pnpm verify:parts`, then the browser self-test in the harness, and fix.
 
@@ -336,7 +336,7 @@ The prompt is in the **START HERE** block at the top of this document. Use that 
 
 ---
 
-# PART C: COMMANDS AND SNIPPETS (Role 1)
+# PART C: COMMANDS AND SNIPPETS (Audio Module)
 
 Starting points to adapt. Check library names and options against the current documentation of each tool.
 
@@ -393,7 +393,7 @@ meta = {
 json.dump(meta, open(os.path.join(OUT, "meta.json"), "w"), indent=2)
 print("wrote", OUT, "(PLACEHOLDER model: replace before any real use)")
 ```
-Everything that mentions this model (`HANDOVER.md`, `docs/role1/MODEL_CARD.md`, `meta.json` id) must say PLACEHOLDER. Replacing it means: put the real `model.onnx` and a matching `meta.json` in `assets/`, fill in `docs/role1/MODEL_CARD.md`, and re-run the self-test.
+Everything that mentions this model (`HANDOVER.md`, `docs/audio-module/MODEL_CARD.md`, `meta.json` id) must say PLACEHOLDER. Replacing it means: put the real `model.onnx` and a matching `meta.json` in `assets/`, fill in `docs/audio-module/MODEL_CARD.md`, and re-run the self-test.
 
 ## C2. Export to ONNX and check it matches PyTorch (Colab)
 ```python
@@ -406,7 +406,7 @@ sess = ort.InferenceSession("model.onnx", providers=["CPUExecutionProvider"])
 x = torch.randn(1, WINDOW_SAMPLES)
 torch_out = model(x).detach().numpy()
 onnx_out = sess.run(None, {"input": x.numpy()})[0]
-np.testing.assert_allclose(torch_out, onnx_out, rtol=1e-3, atol=1e-4)     # write the max abs difference in docs/role1/MODEL_CARD.md
+np.testing.assert_allclose(torch_out, onnx_out, rtol=1e-3, atol=1e-4)     # write the max abs difference in docs/audio-module/MODEL_CARD.md
 ```
 
 ## C3. Quantize and compare (int8)
@@ -440,7 +440,7 @@ def score_clip(wav):
 def eer(labels, scores):                                         # labels: 1 = fake
     fpr, tpr, thr = roc_curve(labels, scores); fnr = 1 - tpr
     i = np.nanargmin(np.abs(fnr - fpr)); return (fpr[i] + fnr[i]) / 2, thr[i]
-# read eval/clips/labels/role1.csv, score every clip, write eval/audio/results.csv (clip_id,label,score_fake,confidence), print EER
+# read eval/clips/labels/audio-eval.csv, score every clip, write eval/audio/results.csv (clip_id,label,score_fake,confidence), print EER
 ```
 
 ## C5. Golden vectors for feature parity (only if the model uses log-mel, LFCC, etc.)

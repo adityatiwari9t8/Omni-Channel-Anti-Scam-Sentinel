@@ -30,9 +30,9 @@ The Sentinel system is partitioned into three cleanly separated roles unified th
 
 | Role | Lead | Focus Areas & Packages |
 |---|---|---|
-| **Role 1** | **Utkarsh** | Audio deepfake detection (`packages/audio-detector`), phishing text classifier (`packages/text-classifier`), model cards, training notebooks. |
-| **Role 2** | **Yash** | Facial computer vision (`packages/vision-detector`), audio-visual sync (`packages/sync-detector`), interactive challenge verifier (`packages/challenge-verifier`). |
-| **Role 3** | **Aditya** (Lead) | Full-stack extension architecture (`apps/extension`), multi-signal arbiter (`packages/arbiter`), capture pipeline (`packages/pipeline`), offline harness (`apps/harness`), root configs & integration. |
+| **Audio Module** | **Utkarsh** | Audio deepfake detection (`packages/audio-detector`), phishing text classifier (`packages/text-classifier`), model cards, training notebooks. |
+| **Vision Module** | **Yash** | Facial computer vision (`packages/vision-detector`), audio-visual sync (`packages/sync-detector`), interactive challenge verifier (`packages/challenge-verifier`). |
+| **Full-Stack Integration** | **Aditya** (Lead) | Full-stack extension architecture (`apps/extension`), multi-signal arbiter (`packages/arbiter`), capture pipeline (`packages/pipeline`), offline harness (`apps/harness`), root configs & integration. |
 
 ---
 

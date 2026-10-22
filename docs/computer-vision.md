@@ -1,16 +1,16 @@
-# ROLE 2: Computer Vision (Video Detective + Lip-Sync + Challenges)
+# COMPUTER VISION MODULE: Computer Vision (Video Detective + Lip-Sync + Challenges)
 
 Owner: Yash
 Read first: `00-master-integration-doc.md` (contracts in section 4 are binding).
 
-## START HERE: generate Role 2 with a coding agent
+## START HERE: generate Vision Module with a coding agent
 
-1. Make an empty folder (for example `sentinel-role2/`). Inside it create `docs/` and put two files there: `00-master-integration-doc.md` and `02-role2-computer-vision.md`.
+1. Make an empty folder (for example `sentinel/`). Inside it create `docs/` and put two files there: `00-master-integration-doc.md` and `computer-vision.md`.
 2. Open a coding agent (Claude Code, Cursor agent, or similar) in that folder and allow it to run shell commands.
 3. Fill in the **decision inputs** below (leave a line blank and the agent chooses a safe default and records it).
 4. Paste the prompt below, and nothing else.
-5. When the agent finishes, read its FINAL REPORT, do the human steps it lists, and send the tarball it made (`role2-<date>.tgz`) to **Aditya (Role 3)**. You do not create a repository.
-6. Later, Aditya pushes the whole project to GitHub. Then you clone it and continue on branches (`role2/<topic>`) with pull requests, inside your own folders only (master doc sections 0 and 18.8).
+5. When the agent finishes, read its FINAL REPORT, do the human steps it lists, and send the tarball it made (`vision-module-<date>.tgz`) to **Aditya (Full-Stack Integration)**. You do not create a repository.
+6. Later, Aditya pushes the whole project to GitHub. Then you clone it and continue on branches (`vision-module/<topic>`) with pull requests, inside your own folders only (master doc sections 0 and 18.8).
 
 ### Decision inputs (edit before you paste; blank means "agent decides and records it")
 ```
@@ -21,32 +21,32 @@ Folder with your real and fake video clips (if you already have any):
 
 ### The prompt (paste exactly; the lines above are filled in by you, the agent reads them from this document)
 ```
-You are a coding agent working in an empty folder. docs/00-master-integration-doc.md and docs/02-role2-computer-vision.md
+You are a coding agent working in an empty folder. docs/00-master-integration-doc.md and docs/computer-vision.md
 describe the Sentinel project (a Chrome extension that detects deepfake voices and faces, and phishing emails, entirely
-inside the browser). You are generating ROLE 2: the vision detector, the lip-sync detector, and the challenge verifier.
+inside the browser). You are generating COMPUTER VISION MODULE: the vision detector, the lip-sync detector, and the challenge verifier.
 Work autonomously. Do not ask me questions except in the cases listed in master doc section 17.2.
 Follow the rules in master doc section 17.1 and finish with the final report in section 17.3.
 
 Steps:
-1. Read both documents completely, including the decision inputs at the top of the Role 2 document.
+1. Read both documents completely, including the decision inputs at the top of the Vision Module document.
 2. Create the scaffold exactly as in master doc Appendix A (all files, no edits). Then run:
    node scripts/make-stubs.mjs ; pnpm install ; pnpm verify:parts ; git init -b main && git add -A && git commit -m scaffold && git tag scaffold-baseline
    pnpm verify:parts must pass before you continue.
-3. Generate Role 2's deliverables as specified in Part B of the Role 2 document (B1 file list, B3 conventions, B4 vision
+3. Generate Vision Module's deliverables as specified in Part B of the Vision Module document (B1 file list, B3 conventions, B4 vision
    detector, B5 sync detector, B6 challenge verifier, B8 evaluation layout), in the order of B10. Replace the stub folders
    packages/vision-detector, packages/sync-detector, packages/challenge-verifier completely (same folder and package names).
 4. Install dependencies with exact versions (pnpm add -E @mediapipe/tasks-vision@<version> --filter @sentinel/vision-detector).
-   Do NOT create any README file anywhere; your notes go in docs/role2/HANDOVER.md and docs/role2/MODEL_CARD.md only.
+   Do NOT create any README file anywhere; your notes go in docs/vision-module/HANDOVER.md and docs/vision-module/MODEL_CARD.md only.
    Download the MediaPipe model files with the commands in Part C2 if you have network access; if not, list the download
    as a human step. Keep all MediaPipe calls behind src/landmarker.ts so the rest of the code is testable with an injected
    fake landmarker in node (vitest).
 5. The sync detector and the challenge verifier must pass the self-test checks in master doc section 11.2 using the shared
    fixtures from @sentinel/contracts; write your vitest tests to run those same scenarios.
 6. After each package run: pnpm vitest run packages/<name> and then pnpm verify:parts. Fix failures before moving on.
-7. When done: node scripts/check-ownership.mjs 2 must pass. Pack the handover with the Role 2 command in master doc 18.4.
+7. When done: node scripts/check-ownership.mjs 2 must pass. Pack the handover with the Vision Module command in master doc 18.4.
 8. Print the FINAL REPORT (master doc 17.3). In section 6 list the human steps: add assets/selftest/face.jpg, open the
    harness in Chrome and run the self-test (pnpm harness) to check the real MediaPipe code, make real and fake clips,
-   calibrate the sync thresholds on them, send the tarball to Aditya (Role 3).
+   calibrate the sync thresholds on them, send the tarball to Aditya (Full-Stack Integration).
 ```
 
 ---
@@ -59,7 +59,7 @@ You deliver three packages and some model files:
 - `packages/vision-detector` implementing `VisionDetector`
 - `packages/sync-detector` implementing `SyncDetector`
 - `packages/challenge-verifier` implementing `ChallengeVerifier`
-- Model files in `packages/vision-detector/assets/` (`face_landmarker.task`, optional `hand_landmarker.task`, `selftest/face.jpg`), declared in `sentinel.assets.json`, plus `docs/role2/MODEL_CARD.md` (master doc section 10.1)
+- Model files in `packages/vision-detector/assets/` (`face_landmarker.task`, optional `hand_landmarker.task`, `selftest/face.jpg`), declared in `sentinel.assets.json`, plus `docs/vision-module/MODEL_CARD.md` (master doc section 10.1)
 - Eval scripts in `eval/scripts/` for the vision signals
 - Face-swap fake clips for the shared test set
 
@@ -115,7 +115,7 @@ Rules:
 
 A full lip-sync model such as SyncNet is too heavy for a short hackathon build, so we use a simple, explainable signal.
 
-- Role 3 pushes the **audio energy envelope** (RMS per short frame) on the same clock.
+- Full-Stack Integration pushes the **audio energy envelope** (RMS per short frame) on the same clock.
 - You maintain a sliding window (start at 5-8 s, tune it) of `mouthAperture` and audio energy, resample both to a common rate, then compute the correlation, optionally over a small range of time lags to absorb call delay. Real speech should show a clear positive relationship, and a lip-sync mismatch lowers it.
 - Convert correlation to `scoreFake` using a threshold you calibrate on real clips. Report `confidence` based on: how much speech was in the window, face found ratio, and landmark quality. **Return `null` until there is enough speech**, instead of guessing.
 - Extra cheap signals if time allows (each must stay optional and independent): blink rate, head-pose jitter, face-edge flicker. Only include one if it measurably helps on your clips.
@@ -144,10 +144,10 @@ You make the fake video the team needs for testing and the demo.
 - Use only **your own face** or someone who has agreed. Never swap in a real third party.
 - Check tool setup and licences yourself (first spike). A real-time open-source face-swap tool through a virtual camera is the likely path.
 - Produce at least 10 labelled fake clips and 10 real clips (20-30 s each), including head turns, hand-over-face, fast speech, and different lighting.
-- Coordinate with Role 1 so the same session can contain both swapped video and cloned audio.
+- Coordinate with Audio Module so the same session can contain both swapped video and cloned audio.
 - Add each clip to `eval/clips/labels.csv`. Record a fallback session for the demo.
 
-## 7. Order of work for Role 2
+## 7. Order of work for Vision Module
 
 Work through these in order at your own pace. The master doc (section 12) says which milestone each step feeds.
 
@@ -158,23 +158,23 @@ Work through these in order at your own pace. The master doc (section 12) says w
 | 3 | `sync-detector` v0, calibrate on real clips | Correlation clearly differs between speech and silence |
 | 4 | `challenge-verifier` (head turn and occlusion) | Passes on real people, reacts on your fakes (second handover, v1) |
 | 5 | Fix live-Meet issues, optional extra signals, help label clips | Works on a real Meet call |
-| 6 | Face-swap fakes, holdout evaluation | Numbers handed to Role 3 (final handover, M4) |
+| 6 | Face-swap fakes, holdout evaluation | Numbers handed to Full-Stack Integration (final handover, M4) |
 | 7 | Demo rehearsal, fallback recording | Fallback video saved (M5) |
 
 ## 8. Handoff checklist
 
 - [ ] Harness self-test is green for `vision`, `sync`, and `challenge` (master doc section 11.2); `pnpm verify:parts` passes.
-- [ ] `assets/` holds every file named in `sentinel.assets.json`; `docs/role2/MODEL_CARD.md` complete (master doc section 10.1).
+- [ ] `assets/` holds every file named in `sentinel.assets.json`; `docs/vision-module/MODEL_CARD.md` complete (master doc section 10.1).
 - [ ] Recommended thresholds for `scoreFake` (sync) and `artifactScore` (challenges).
 - [ ] Latency table: ms per frame by backend and frame size.
 - [ ] Eval report: clip counts, detection rate, false positive rate, failure cases.
 - [ ] Description of which challenge works best against which fake tool.
-- [ ] Face-swap setup notes (in `docs/role2/HANDOVER.md`) and fallback video.
+- [ ] Face-swap setup notes (in `docs/vision-module/HANDOVER.md`) and fallback video.
 
 ## 9. Things to ask other roles
 
-- Role 3: the frame size and fps defaults (in the contracts) and the harness that replays a video with audio.
-- Role 1: nothing blocking; confirm the audio energy envelope is computed on the same stream and clock.
+- Full-Stack Integration: the frame size and fps defaults (in the contracts) and the harness that replays a video with audio.
+- Audio Module: nothing blocking; confirm the audio energy envelope is computed on the same stream and clock.
 
 ## 10. Risks specific to you
 
@@ -214,8 +214,8 @@ packages/challenge-verifier/
   src/index.ts        exports createChallengeVerifier()
   src/head-turn.ts  src/cover.ts  src/fingers.ts  src/artifact.ts
   tests/*.test.ts
-colab/vision/   eval/vision/   eval/clips/labels/role2.csv
-docs/role2/HANDOVER.md   docs/role2/MODEL_CARD.md       (the only documentation: NO README anywhere in your folders)
+colab/vision/   eval/vision/   eval/clips/labels/vision-eval.csv
+docs/vision-module/HANDOVER.md   docs/vision-module/MODEL_CARD.md       (the only documentation: NO README anywhere in your folders)
 ```
 
 `sentinel.assets.json` for vision:
@@ -232,7 +232,7 @@ docs/role2/HANDOVER.md   docs/role2/MODEL_CARD.md       (the only documentation:
 
 1. MediaPipe Face Landmarker runs in the browser on a video file, **using only bundled files** (no CDN). Confirm the current package name, API, and licence in its documentation.
 2. Plot `mouthAperture` and head pose over a clip of someone talking and turning their head. Confirm they behave sensibly at 480 px width.
-3. Decide whether to use the hand landmarker (for `handNearFace` and the cover/fingers challenges) or skip it. Write the decision in `docs/role2/MODEL_CARD.md`.
+3. Decide whether to use the hand landmarker (for `handNearFace` and the cover/fingers challenges) or skip it. Write the decision in `docs/vision-module/MODEL_CARD.md`.
 4. Tell the team right away. If MediaPipe cannot load from bundled files, say so at M1.
 
 ## B3. Conventions (binding)
@@ -269,7 +269,7 @@ docs/role2/HANDOVER.md   docs/role2/MODEL_CARD.md       (the only documentation:
 
 ## B5. SyncDetector specification (`packages/sync-detector`)
 
-**Resolution limit (state it in `docs/role2/HANDOVER.md`):** at 10 frames per second, one frame is 100 ms, so the check sees the mouth opening and closing at roughly word and phrase level. It cannot reliably see short sounds such as a "P" lip closure. Do not claim phoneme-level lip-sync detection; report what was measured.
+**Resolution limit (state it in `docs/vision-module/HANDOVER.md`):** at 10 frames per second, one frame is 100 ms, so the check sees the mouth opening and closing at roughly word and phrase level. It cannot reliably see short sounds such as a "P" lip closure. Do not claim phoneme-level lip-sync detection; report what was measured.
 
 
 Inputs: `pushAudioEnergy(rms, tsMs)` every 100 ms, `pushFrame(FrameResult)` about every 200 ms.
@@ -285,7 +285,7 @@ Inputs: `pushAudioEnergy(rms, tsMs)` every 100 ms, `pushFrame(FrameResult)` abou
 9. Return `tsMs` = the latest sample time; `windowMs` = the window length used.
 10. `reset()` clears all buffers.
 
-Scope: the captured tab audio is the **remote** audio, so the sync check is valid for **1-on-1 calls** (one remote speaker, one tracked face). In a group call the audio mixes several people and the tracked face may be silent while someone else talks. For the demo, support 1-on-1 only, and say so in `docs/role2/HANDOVER.md` and the overlay ("Works best in 1-on-1 calls").
+Scope: the captured tab audio is the **remote** audio, so the sync check is valid for **1-on-1 calls** (one remote speaker, one tracked face). In a group call the audio mixes several people and the tracked face may be silent while someone else talks. For the demo, support 1-on-1 only, and say so in `docs/vision-module/HANDOVER.md` and the overlay ("Works best in 1-on-1 calls").
 
 Cases that must **not** raise false alarms (test each and report): the caller is muted or silent (no speech bins, so return `null`), very quiet speech, background music or noise on the call (gate on speech-like energy and do not score when speech is not clear), and video lag (covered by the lag search).
 
@@ -304,10 +304,10 @@ Tests: synthetic correlated signals give a low `scoreFake`; independent noise gi
 
 ### `cover_half_face`
 - `passed` when `faceOccluded` (or hand coverage above 0.35) holds for at least **0.8 s** and the face is found again afterwards.
-- Starting heuristic for `artifactScore`: a real hand in front of a real face reduces landmark quality and moves landmarks; a face-swap overlay often keeps rendering the face on top of the hand or glitches at its edge. Use two terms: `qualityStaysHigh` (mean quality during occlusion stays above 0.8 while coverage is above 0.5) and `edgeJitter` (jitter spike at the moment coverage crosses 0.35, relative to baseline). `artifactScore = max` of both terms. **Calibrate on real people and on your fakes; this is experimental and `docs/role2/HANDOVER.md` must say how reliable it was.**
+- Starting heuristic for `artifactScore`: a real hand in front of a real face reduces landmark quality and moves landmarks; a face-swap overlay often keeps rendering the face on top of the hand or glitches at its edge. Use two terms: `qualityStaysHigh` (mean quality during occlusion stays above 0.8 while coverage is above 0.5) and `edgeJitter` (jitter spike at the moment coverage crosses 0.35, relative to baseline). `artifactScore = max` of both terms. **Calibrate on real people and on your fakes; this is experimental and `docs/vision-module/HANDOVER.md` must say how reliable it was.**
 
 ### `raise_fingers` (optional, only if the hand landmarker works)
-- `passed` when a hand is near the face (`handNearFace`) for at least 1 s. `artifactScore` computed like `cover_half_face`. If you skip this challenge, `start("raise_fingers")` immediately returns a `failed` status with evidence `"not supported"`, and **tell Role 3** so the arbiter skips it.
+- `passed` when a hand is near the face (`handNearFace`) for at least 1 s. `artifactScore` computed like `cover_half_face`. If you skip this challenge, `start("raise_fingers")` immediately returns a `failed` status with evidence `"not supported"`, and **tell Full-Stack Integration** so the arbiter skips it.
 
 `cancel()` clears the active challenge. `evidence` is always a short plain sentence.
 
@@ -318,9 +318,9 @@ Tests with synthetic `FrameResult` sequences (use fixtures from `@sentinel/contr
 - Use only your own face or someone who agreed. Never use a real third party.
 - Verify tool setup and licences yourself (an open-source real-time face-swap tool plus a virtual camera is the likely path).
 - At least 10 fake and 10 real clips, 20-30 s each: talking, head turns left and right, hand over half the face, fast speech, dim and bright light, glasses on and off.
-- Coordinate with Role 1 so some sessions contain swapped video **and** cloned voice.
+- Coordinate with Audio Module so some sessions contain swapped video **and** cloned voice.
 - Record a fallback session for the demo before the freeze (M5).
-- List clips in `eval/clips/labels/role2.csv`.
+- List clips in `eval/clips/labels/vision-eval.csv`.
 
 ## B8. Evaluation layout
 
@@ -338,9 +338,9 @@ eval/vision/report.md                        detection rate, false positive rate
 - [ ] Median `processFrame` time at or under 60 ms at 480 px width (or a documented table of what was tried).
 - [ ] Sync: low false-alarm rate on real speech, including a muted caller and a quiet caller; numbers in `report.md`.
 - [ ] Head-turn challenge works on real people; behaviour against your best fake is reported honestly.
-- [ ] `docs/role2/HANDOVER.md` (template in master doc 17.5) and `docs/role2/MODEL_CARD.md` complete; `assets/` has every file in `sentinel.assets.json`.
+- [ ] `docs/vision-module/HANDOVER.md` (template in master doc 17.5) and `docs/vision-module/MODEL_CARD.md` complete; `assets/` has every file in `sentinel.assets.json`.
 - [ ] No network calls (`pnpm check:privacy` passes).
-- [ ] Clips made and listed in `labels/role2.csv`; fallback recording saved.
+- [ ] Clips made and listed in `labels/vision-eval.csv`; fallback recording saved.
 
 ## B10. Generation order (the agent works through these in order, running tests after each step)
 
@@ -350,7 +350,7 @@ eval/vision/report.md                        detection rate, false positive rate
 4. `detector.ts` and `index.ts` for the vision package, with an injected fake landmarker for tests.
 5. Sync package: `window.ts`, `correlate.ts`, `index.ts`, calibration file, tests.
 6. Challenge verifier: `head-turn.ts`, `artifact.ts`, `cover.ts`, `fingers.ts`, `index.ts`, tests.
-7. `docs/role2/HANDOVER.md`, `docs/role2/MODEL_CARD.md`, `sentinel.assets.json` files (no README).
+7. `docs/vision-module/HANDOVER.md`, `docs/vision-module/MODEL_CARD.md`, `sentinel.assets.json` files (no README).
 8. Run `pnpm verify:parts`, then the browser self-test in the harness, and fix.
 
 ## B11. Prompt for your code assistant
@@ -359,7 +359,7 @@ The prompt is in the **START HERE** block at the top of this document. Use that 
 
 ---
 
-# PART C: COMMANDS AND SNIPPETS (Role 2)
+# PART C: COMMANDS AND SNIPPETS (Vision Module)
 
 Starting points to adapt. Check library names and options against the current documentation of each tool.
 
@@ -428,7 +428,7 @@ def best_lag_corr(a, b, max_lag=4):            # both series at 10 Hz, so max_la
             best = max(best, float(np.corrcoef(x, y)[0, 1]))
     return best
 # For every real clip, slide an 8 s window, compute best_lag_corr(aperture, audio_energy); the distribution gives you rLow and rHigh.
-# Repeat on fake clips. Save the chosen values in packages/sync-detector/src/calibration.json and describe the evidence in `docs/role2/HANDOVER.md`.
+# Repeat on fake clips. Save the chosen values in packages/sync-detector/src/calibration.json and describe the evidence in `docs/vision-module/HANDOVER.md`.
 ```
 
 ## C6. Commands you will run all the time

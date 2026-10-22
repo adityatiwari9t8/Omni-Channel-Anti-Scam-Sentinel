@@ -1,16 +1,16 @@
-# ROLE 3: Full-Stack and Integration (Extension, Arbiter, Alert UI)
+# FULL-STACK INTEGRATION: Full-Stack and Integration (Extension, Arbiter, Alert UI)
 
 Owner: Aditya
 Read first: `00-master-integration-doc.md` (contracts in section 4 are binding).
 
-## START HERE: generate Role 3 with a coding agent
+## START HERE: generate Full-Stack Integration with a coding agent
 
-1. Make an empty folder (for example `sentinel/`). Inside it create `docs/` and put two files there: `00-master-integration-doc.md` and `03-role3-fullstack-extension.md`.
+1. Make an empty folder (for example `sentinel/`). Inside it create `docs/` and put two files there: `00-master-integration-doc.md` and `fullstack-extension.md`.
 2. Open a coding agent (Claude Code, Cursor agent, or similar) in that folder and allow it to run shell commands.
 3. Fill in the **decision inputs** below (leave a line blank and the agent chooses a safe default and records it).
 4. Paste the prompt below, and nothing else.
 5. When the agent finishes, read its FINAL REPORT and do the human steps it lists (loading the extension in Chrome and testing on a real Meet call are always human steps; an agent cannot do them).
-6. When Utkarsh (Role 1) and Yash (Role 2) send their tarballs, put them in a `handovers/` folder and follow master doc 18.5 (or ask the agent to).
+6. When Utkarsh (Audio Module) and Yash (Vision Module) send their tarballs, put them in a `handovers/` folder and follow master doc 18.5 (or ask the agent to).
 7. When the full stack works, the agent writes the single root `README.md`; you push the project to GitHub (master doc 18.8) and add Utkarsh and Yash as collaborators. They clone it and continue on branches with pull requests.
 
 ### Decision inputs (edit before you paste; blank means "agent decides and records it")
@@ -22,24 +22,24 @@ Keep the Gmail phishing banner in scope (yes/no/decide later):
 
 ### The prompt (paste exactly; the lines above are filled in by you, the agent reads them from this document)
 ```
-You are a coding agent working in an empty folder. docs/00-master-integration-doc.md and docs/03-role3-fullstack-extension.md
+You are a coding agent working in an empty folder. docs/00-master-integration-doc.md and docs/fullstack-extension.md
 describe the Sentinel project (a Chrome extension that detects deepfake voices and faces, and phishing emails, entirely
-inside the browser). You are generating ROLE 3: the scaffold owner and integrator (arbiter, pipeline, Chrome extension,
+inside the browser). You are generating FULL-STACK INTEGRATION: the scaffold owner and integrator (arbiter, pipeline, Chrome extension,
 overlay, popup, Gmail banner, harness extensions, benchmarks docs).
 Work autonomously. Do not ask me questions except in the cases listed in master doc section 17.2.
 Follow the rules in master doc section 17.1 and finish with the final report in section 17.3.
 
 Steps:
-1. Read both documents completely, including the decision inputs at the top of the Role 3 document.
+1. Read both documents completely, including the decision inputs at the top of the Full-Stack Integration document.
 2. Create the scaffold exactly as in master doc Appendix A (all files, no edits to contracts, fixtures, self-test, or
    mocks). Then run: node scripts/make-stubs.mjs ; pnpm install ; pnpm verify:parts ; git init -b main && git add -A &&
    git commit -m scaffold && git tag scaffold-baseline. pnpm verify:parts must pass before you continue.
-3. Generate everything else Role 3 owns, following Part B3 of the Role 3 document step by step: packages/arbiter,
+3. Generate everything else Full-Stack Integration owns, following Part B3 of the Full-Stack Integration document step by step: packages/arbiter,
    packages/pipeline, apps/extension (manifest, service worker, offscreen document, Meet and Gmail content scripts, overlay,
    popup), the harness replay page, docs (benchmarks, demo script, spike notes template, README). Use master doc sections 3
    and 7 to 9 as the design; copy the message formats and defaults exactly.
 4. Run pnpm test after every package and pnpm verify at the end. pnpm verify must pass (it builds the extension).
-5. If a folder named handovers/ contains role1-*.tgz or role2-*.tgz, integrate them with master doc 18.5, then run pnpm verify.
+5. If a folder named handovers/ contains audio-module-*.tgz or vision-module-*.tgz, integrate them with master doc 18.5, then run pnpm verify.
    The repository has ONE README: write the root README.md yourself (what Sentinel is, how to install, build, test, load the
    extension, the architecture in a few lines, honest results, limitations, who did what), using the docs/role1 and
    docs/role2 HANDOVER.md notes and only what was measured. Never add README files inside packages.
@@ -118,7 +118,7 @@ Every decision writes a JSONL line: timestamp, inputs, fused score, state, reaso
 ## 6. Gmail banner
 
 - Content script reads the open email (subject, body text, links with `href`, sender name and address) and builds an `EmailInput`.
-- Call Role 1's `TextClassifier.classify` and show a banner at the top of the email with the label and reasons.
+- Call Audio Module's `TextClassifier.classify` and show a banner at the top of the email with the label and reasons.
 - Only run on emails the user opens. Do not store or transmit email content.
 - Cut-or-keep decision once the core demo path works.
 
@@ -149,7 +149,7 @@ You run the integration. Milestones are reached in order; there is no fixed sche
 | M4 | Final handovers in; eval numbers and latency numbers collected; weights and thresholds tuned |
 | M5 | Freeze: no new features, only bug fixes; release build, README, demo script, fallback ready |
 
-## 10. Order of work for Role 3
+## 10. Order of work for Full-Stack Integration
 
 Follow the numbered generation order in Part B3 below. In short: scaffold from Appendix A (already includes contracts, mocks, stubs, scripts, minimal harness), arbiter, pipeline, extension shell, offscreen audio, Meet content script and overlay, harness, integrate real packages as they arrive, challenge UI and logging, Gmail banner (or cut), benchmarks and release.
 
@@ -165,8 +165,8 @@ Follow the numbered generation order in Part B3 below. In short: scaffold from A
 
 ## 12. Things to ask other roles
 
-- Role 1: the audio chunk size they prefer, silence-gate behaviour, and the recommended threshold range.
-- Role 2: frame size and fps they need, and how they want the audio energy delivered.
+- Audio Module: the audio chunk size they prefer, silence-gate behaviour, and the recommended threshold range.
+- Vision Module: frame size and fps they need, and how they want the audio energy delivered.
 
 ## 13. Risks specific to you
 
@@ -280,7 +280,7 @@ Settings compared: fps (3/5/8), frame width (320/480), audio window, int8 vs fp3
 - [ ] Stubs replaced, not merged; `pnpm install` succeeds.
 - [ ] `pnpm verify` passes.
 - [ ] Harness self-test is green for the delivered modules; latency numbers recorded in `docs/benchmarks.md`.
-- [ ] `docs/role<N>/HANDOVER.md` and `docs/role<N>/MODEL_CARD.md`, thresholds, and known limitations read and used for the root `README.md`.
+- [ ] `docs/audio-module/HANDOVER.md` and `docs/audio-module/MODEL_CARD.md`, thresholds, and known limitations read and used for the root `README.md`.
 - [ ] Re-run a labelled clip in the harness and confirm the scores match the owner's eval within a small tolerance.
 
 ## B8. Acceptance criteria (you are done when all are true)
@@ -300,7 +300,7 @@ The prompt is in the **START HERE** block at the top of this document. Use that 
 
 ---
 
-# PART C: COMMANDS AND SNIPPETS (Role 3)
+# PART C: COMMANDS AND SNIPPETS (Full-Stack Integration)
 
 The full command list (repo creation, install, build, load unpacked, debug views, integrating handovers, release) is in master doc section 18, and the reference code for `serve.mjs`, `check-integration.mjs`, and `check-privacy.mjs` is in master doc Appendix A. Below are the small shared helpers and the exact snippets the spike needs.
 

@@ -5,11 +5,11 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 // folder -> required export, delivering role (1 = Utkarsh, 2 = Yash), and whether a model card is required
 const REQUIRED = {
-  "audio-detector":     { fn: "createAudioDetector",     role: 1, card: true },
-  "text-classifier":    { fn: "createTextClassifier",    role: 1, card: true },
-  "vision-detector":    { fn: "createVisionDetector",    role: 2, card: true },
-  "sync-detector":      { fn: "createSyncDetector",      role: 2, card: false },
-  "challenge-verifier": { fn: "createChallengeVerifier", role: 2, card: false },
+  "audio-detector":     { fn: "createAudioDetector",     roleName: "audio-module", card: true },
+  "text-classifier":    { fn: "createTextClassifier",    roleName: "audio-module", card: true },
+  "vision-detector":    { fn: "createVisionDetector",    roleName: "vision-module", card: true },
+  "sync-detector":      { fn: "createSyncDetector",      roleName: "vision-module", card: false },
+  "challenge-verifier": { fn: "createChallengeVerifier", roleName: "vision-module", card: false },
 };
 let failures = 0;
 const fail = (m) => { console.error("FAIL " + m); failures++; };
@@ -26,7 +26,7 @@ async function readmes(dir) {
   return found;
 }
 
-for (const [dir, { fn, role, card }] of Object.entries(REQUIRED)) {
+for (const [dir, { fn, roleName, card }] of Object.entries(REQUIRED)) {
   const base = path.join(root, "packages", dir);
   if (!existsSync(base)) { fail(`${dir}: folder missing`); continue; }
   let pj;
@@ -46,12 +46,12 @@ for (const [dir, { fn, role, card }] of Object.entries(REQUIRED)) {
     const src = await readFile(idx, "utf8");
     if (!src.includes(fn) || !/\bexport\b/.test(src)) fail(`${dir}: src/index.ts must export ${fn}`);
   }
-  // One repository, one README (the root one, owned by Role 3). Role packages must not have their own.
-  for (const r of await readmes(base)) fail(`${dir}: remove ${path.relative(root, r)} (the repo has a single root README; put notes in docs/role${role}/HANDOVER.md)`);
+  // One repository, one README (the root one, owned by Full-Stack Integration). Role packages must not have their own.
+  for (const r of await readmes(base)) fail(`${dir}: remove ${path.relative(root, r)} (the repo has a single root README; put notes in docs/${roleName}/HANDOVER.md)`);
   if (!isStub) {
-    const notes = path.join(root, "docs", `role${role}`);
-    if (!existsSync(path.join(notes, "HANDOVER.md"))) fail(`${dir}: docs/role${role}/HANDOVER.md missing`);
-    if (card && !existsSync(path.join(notes, "MODEL_CARD.md"))) fail(`${dir}: docs/role${role}/MODEL_CARD.md missing`);
+    const notes = path.join(root, "docs", roleName);
+    if (!existsSync(path.join(notes, "HANDOVER.md"))) fail(`${dir}: docs/${roleName}/HANDOVER.md missing`);
+    if (card && !existsSync(path.join(notes, "MODEL_CARD.md"))) fail(`${dir}: docs/${roleName}/MODEL_CARD.md missing`);
   }
   const af = path.join(base, "sentinel.assets.json");
   if (!existsSync(af)) fail(`${dir}: sentinel.assets.json missing`);

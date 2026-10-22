@@ -1,4 +1,4 @@
-# Role 2 model card
+# Vision Module model card
 
 Model name and version: MediaPipe Face Landmarker float16 task bundle v1; MediaPipe Hand Landmarker float16 task bundle v1.
 Source URL and commit/checkpoint: [Face Landmarker bundle](https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task); [Hand Landmarker bundle](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task). Both URLs are the versions specified by the project brief; no source commit metadata was supplied.

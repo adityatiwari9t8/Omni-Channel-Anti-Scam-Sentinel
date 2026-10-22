@@ -16,13 +16,13 @@ export interface InitOptions {
 
 /** Where assets are placed in dist (see sentinel.assets.json in each package). */
 export const ASSET_PATHS = {
-  audioModelDir: "models/audio/",   // model.onnx + meta.json (Role 1)
-  visionModelDir: "models/vision/", // face_landmarker.task (+ optional hand_landmarker.task) (Role 2)
-  ortDir: "ort/",                   // onnxruntime-web .wasm/.mjs files (Role 1)
-  mediapipeWasmDir: "mediapipe/wasm/", // @mediapipe/tasks-vision wasm files (Role 2)
+  audioModelDir: "models/audio/",   // model.onnx + meta.json (Audio Module)
+  visionModelDir: "models/vision/", // face_landmarker.task (+ optional hand_landmarker.task) (Vision Module)
+  ortDir: "ort/",                   // onnxruntime-web .wasm/.mjs files (Audio Module)
+  mediapipeWasmDir: "mediapipe/wasm/", // @mediapipe/tasks-vision wasm files (Vision Module)
 } as const;
 
-// ---------- Role 1: audio ----------
+// ---------- Audio Module: audio ----------
 export interface AudioResult {
   windowStartMs: Ms;
   windowEndMs: Ms;
@@ -39,7 +39,7 @@ export interface AudioDetector {
   dispose(): void;        // safe to call twice
 }
 
-// ---------- Role 1: text ----------
+// ---------- Audio Module: text ----------
 export interface EmailInput {
   subject: string;
   bodyText: string;
@@ -61,7 +61,7 @@ export interface TextClassifier {
   classify(e: EmailInput): Promise<TextResult>;
 }
 
-// ---------- Role 2: vision ----------
+// ---------- Vision Module: vision ----------
 export interface FrameResult {
   tsMs: Ms;
   faceFound: boolean;
@@ -113,7 +113,7 @@ export interface ChallengeVerifier {
   cancel(): void;
 }
 
-// ---------- Role 3: arbiter ----------
+// ---------- Full-Stack Integration: arbiter ----------
 export type ArbiterState = "CLEAR" | "SUSPICIOUS" | "CHALLENGE" | "ALERT";
 export interface ArbiterOutput {
   tsMs: Ms;

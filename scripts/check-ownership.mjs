@@ -5,10 +5,10 @@ import { execSync } from "node:child_process";
 
 const role = process.argv[2];
 const OWN = {
-  "1": ["packages/audio-detector/", "packages/text-classifier/", "colab/audio/", "colab/text/", "eval/audio/", "eval/text/", "eval/clips/labels/role1.csv", "docs/role1/"],
-  "2": ["packages/vision-detector/", "packages/sync-detector/", "packages/challenge-verifier/", "colab/vision/", "eval/vision/", "eval/clips/labels/role2.csv", "docs/role2/"],
+  "1": ["packages/audio-detector/", "packages/text-classifier/", "colab/audio/", "colab/text/", "eval/audio/", "eval/text/", "eval/clips/labels/audio-eval.csv", "docs/audio-module/"],
+  "2": ["packages/vision-detector/", "packages/sync-detector/", "packages/challenge-verifier/", "colab/vision/", "eval/vision/", "eval/clips/labels/vision-eval.csv", "docs/vision-module/"],
 };
-if (!OWN[role]) { console.error("Usage: node scripts/check-ownership.mjs <1|2>   (Role 3 owns everything else and is not checked)"); process.exit(2); }
+if (!OWN[role]) { console.error("Usage: node scripts/check-ownership.mjs <1|2>   (Full-Stack Integration owns everything else and is not checked)"); process.exit(2); }
 
 const sh = (c) => execSync(c, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).split("\n").map((s) => s.trim()).filter(Boolean);
 function baseRef() {
@@ -35,7 +35,7 @@ if (outside.length || readmes.length) {
   if (readmes.length) {
     console.error(`FAIL: README files are not allowed in role folders (the repo has one root README):`);
     readmes.forEach((f) => console.error("  " + f));
-    console.error(`Put the notes in docs/role${role}/HANDOVER.md instead.`);
+    console.error(`Put the notes in docs/audio-module/HANDOVER.md or docs/vision-module/HANDOVER.md instead.`);
   }
   process.exit(1);
 }

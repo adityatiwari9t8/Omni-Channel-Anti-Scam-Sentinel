@@ -14,7 +14,7 @@ const loadMeta: AudioMetaLoader = async (base) => {
   return parseAudioModelMeta(await response.json());
 };
 
-/** Real ONNX-backed Role 1 detector. Dependencies are injectable for pure Node tests. */
+/** Real ONNX-backed Audio Module detector. Dependencies are injectable for pure Node tests. */
 export class AudioDetectorImpl implements AudioDetectorContract {
   private meta: AudioModelMeta | null = null;
   private session: InferenceSessionLike | null = null;

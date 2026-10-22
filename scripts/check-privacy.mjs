@@ -38,5 +38,5 @@ for (const top of ["packages", "apps"]) {
     });
   }
 }
-if (failures) { console.error(`\n${failures} privacy problem(s). Remove the call, or Role 3 adds a justified entry to scripts/privacy-allow.json.`); process.exit(1); }
+if (failures) { console.error(`\n${failures} privacy problem(s). Remove the call, or Full-Stack Integration adds a justified entry to scripts/privacy-allow.json.`); process.exit(1); }
 console.log("Privacy check passed: no outbound network calls found in source.");

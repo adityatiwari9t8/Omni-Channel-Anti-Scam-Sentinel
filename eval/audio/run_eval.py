@@ -9,7 +9,7 @@ import onnxruntime as ort
 
 ROOT = Path(__file__).resolve().parents[2]
 ASSET = ROOT / "packages/audio-detector/assets"
-LABELS = ROOT / "eval/clips/labels/role1.csv"
+LABELS = ROOT / "eval/clips/labels/audio-eval.csv"
 OUT = ROOT / "eval/audio/results.csv"
 REPORT = ROOT / "eval/audio/metrics.json"
 
@@ -103,7 +103,7 @@ def main():
         }
     else:
         report = {"model_id": meta["id"], "clip_count": 0, "metrics": None,
-                  "warning": "No labeled clips were available. Add 16 kHz mono WAV files and real/fake labels to eval/clips/labels/role1.csv."}
+                  "warning": "No labeled clips were available. Add 16 kHz mono WAV files and real/fake labels to eval/clips/labels/audio-eval.csv."}
     REPORT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(f"Wrote {len(rows)} clip scores to {OUT} and metrics to {REPORT}.")
 

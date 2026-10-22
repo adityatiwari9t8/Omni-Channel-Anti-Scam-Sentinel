@@ -1,4 +1,4 @@
-"""Summarize exported Role 2 detector results against the Role 2 clip labels."""
+"""Summarize exported Vision Module detector results against the Vision Module clip labels."""
 import csv
 import sys
 from collections import defaultdict

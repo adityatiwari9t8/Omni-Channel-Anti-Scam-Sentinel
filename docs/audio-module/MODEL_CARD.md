@@ -1,4 +1,4 @@
-# Role 1 Model Cards
+# Audio Module Model Cards
 
 ## 1. Audio Detective Model: AASIST
 
