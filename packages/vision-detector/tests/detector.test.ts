@@ -14,7 +14,9 @@ describe("VisionDetector", () => {
   it("returns the no-face contract and never throws on detection errors", async () => {
     const d = makeVisionDetector(async () => fakeLandmarkers(true), false);
     await d.init({ assetBase: "/" });
-    expect(await d.processFrame(frame, 1)).toMatchObject({ faceFound: false, mouthAperture: 0, landmarkQuality: 0 });
+    const noFace = await d.processFrame(frame, 1);
+    expect(noFace).toMatchObject({ faceFound: false, mouthAperture: 0, landmarkQuality: 0, deepfakeAvailable: false });
+    expect(noFace.deepfakeScore).toBeUndefined();
     d.dispose(); d.dispose();
     const broken = makeVisionDetector(async () => ({ backend: "CPU", face: { detectForVideo() { throw Error("bad frame"); }, close() {} }, hands: null }), false);
     await broken.init({ assetBase: "/" });

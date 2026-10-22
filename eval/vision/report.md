@@ -6,6 +6,10 @@ Evaluation status: not run. The supplied workspace contains zero labeled media c
 
 The implementation is a prototype. Sync settings are initial defaults, not calibrated thresholds. No accuracy claim is supported by the current evidence.
 
+The bundled CommunityForensics classifier has no matching labeled frame-score export, so its frame-level and video-level metrics are not run. The generated portrait in `packages/vision-detector/assets/selftest/face.jpg` is excluded from both training and accuracy evaluation. The current ONNX browser smoke check confirms inference wiring only.
+
+For future per-frame score exports, run `python eval/vision/evaluate_frame_scores.py PATH_TO_SCORES.csv --dataset NAME --revision REVISION --license LICENSE`. The CSV must contain `split,video_id,person_id,source_id,frame_id,label,score_fake`; blank `score_fake` means abstention. Optional `compression`, `resolution`, and `quality` columns produce test-set condition breakdowns. The CLI rejects ID leakage across train/validation/test, chooses the threshold on validation video aggregates only, freezes maximum frame score as the video aggregation method, and reports separate frame/video test metrics. It summarizes exported scores and does not run ONNX inference.
+
 ## To run with authorized data
 
 Record consented real and fake sessions, add one row per clip to `eval/clips/labels/vision-eval.csv`, and export detector results to `eval/vision/role2_results.csv`. Both files use these columns: `clip_id,label,sync_score,challenge,challenge_state,artifact_score`. Run:

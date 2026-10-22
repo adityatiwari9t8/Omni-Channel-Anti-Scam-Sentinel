@@ -1,0 +1,63 @@
+{
+  "evaluation": "Recomputed aggregate metrics from checked-in ASVspoof 2021 LA per-utterance scores; no inference rerun",
+  "dataset": "SpeechAntiSpoofingBenchmarks/ASVspoof2021_LA",
+  "dataset_revision": "46df9e62a71f74d0597cd84e3814784b86c6de83",
+  "dataset_license": "ODC-By (dataset card)",
+  "selected_shard_indices": [
+    0,
+    11,
+    23
+  ],
+  "label_mapping": {
+    "bonafide": "human speech (dataset label 0)",
+    "spoof": "spoofed/TTS/voice-converted speech (dataset label 1)"
+  },
+  "model_id": "AASIST-ASVspoof2019-LA-ONNX-1.0",
+  "model_sha256": "130e536266b7c537f9a13029e1612a9f392fd1cc827783683b6d1c062a3db5e1",
+  "preprocessing": "16 kHz mono float32, stereo averaged if present, no resampling or normalization, 64,600-sample window, 32,300-sample hop, existing speech gate; only windows with inference_windows > 0 enter conditional metrics",
+  "scored_counts": {
+    "bonafide": 353,
+    "spoof": 2063,
+    "unique_speakers": 61,
+    "duplicate_nonempty_audio_hashes": 0
+  },
+  "coverage": {
+    "selected_eval_utterances": 18454,
+    "scored_utterances": 2416,
+    "overall_scored_fraction_of_selected_eval": 0.13092012571800152,
+    "bonafide_scored_fraction_of_selected_eval": 0.19174361759913092,
+    "spoof_scored_fraction_of_selected_eval": 0.12417985914645158,
+    "eligible_utterances": 2478,
+    "scored_fraction_of_window_eligible": 0.9749798224374495,
+    "abstentions_after_window_eligibility": 62
+  },
+  "metrics_at_frozen_project_threshold": {
+    "threshold": 0.5,
+    "accuracy": 0.9317052980132451,
+    "balanced_accuracy": 0.8977842439089365,
+    "spoof_recall": 0.9457101308773631,
+    "bonafide_false_positive_rate": 0.1501416430594901,
+    "false_negative_rate": 0.05428986912263694,
+    "confusion_matrix": {
+      "tn": 300,
+      "fp": 53,
+      "fn": 112,
+      "tp": 1951
+    }
+  },
+  "roc_auc": 0.9627519262220232,
+  "pr_auc_average_precision": 0.9918247328693243,
+  "diagnostic_eer_on_scored_eval_only": {
+    "eer": 0.09064812513474285,
+    "threshold": 0.8789269328117371,
+    "far": 0.0906515580736544,
+    "frr": 0.09064469219583131
+  },
+  "threshold_note": "0.5 is the shipped provisional interface threshold, not selected on this evaluation subset. The EER threshold is diagnostic only and must not be adopted for deployment.",
+  "limitations": [
+    "Recomputes summary statistics from tracked scores and provenance counts; does not rerun the ONNX model.",
+    "The source score file covers only selected ASVspoof 2021 LA eval shards and only utterances with a usable full model window.",
+    "ASVspoof 2021 LA is a telephony/VoIP benchmark, not labeled consented Meet/Zoom call data.",
+    "Scores from utterances with the same speaker or attack condition are not independent; reported metrics have no cluster-adjusted uncertainty."
+  ]
+}

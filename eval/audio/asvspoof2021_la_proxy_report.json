@@ -59,7 +59,10 @@
       "fn": 112,
       "tp": 1951
     },
-    "roc_auc": 0.9627519262220232
+    "roc_auc": 0.9627519262220232,
+    "false_negative_rate": 0.05428986912263694,
+    "pr_auc_average_precision": 0.9918247328693243,
+    "pr_auc_definition": "Stepwise average precision, spoof as positive class"
   },
   "diagnostic_eer_on_scored_clips": {
     "eer": 0.09064812513474285,

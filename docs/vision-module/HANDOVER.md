@@ -12,3 +12,18 @@
 10. Notes for the root README: describe the vision signals and challenge checks as a prototype. Do not claim accuracy, false-positive rates, calibrated thresholds, or validated deepfake detection until `eval/vision/report.md` contains measured results.
 
 Resolution limit: with 100 ms audio bins and about 200 ms video frames, the sync check only resolves broad mouth opening and closing. It is not phoneme-level lip-sync detection. The captured tab audio is mixed in group calls; the sync result should be used for 1-on-1 calls. Surface the message “Works best in 1-on-1 calls” in the overlay.
+
+## Frame-classifier training/evaluation update (2026-10-22)
+
+- No new vision checkpoint was trained or exported. The workspace contains no labeled real/fake video or frame dataset; the vision label CSV is header-only. The synthetic `assets/selftest/face.jpg` remains smoke-test-only.
+- The shipped CommunityForensics image model remains unchanged. Its source revision, asset hash, crop, resize, RGB normalization, tensor layout, and sigmoid output mapping are recorded in `MODEL_CARD.md` and regression-tested in `packages/vision-detector/tests/deepfake.test.ts`.
+- No frame-level or video-level metrics, threshold, compression robustness, or whole-video detection claim is available. The browser emits a per-frame synthetic-image signal with fixed confidence 0.4; the downstream reason cutoff is not calibrated.
+- For future labeled exports, use `python eval/vision/evaluate_frame_scores.py PATH_TO_SCORES.csv --dataset NAME --revision REVISION --license LICENSE`. The script requires train/validation/test labels and disjoint video, person, and source IDs; chooses a threshold on validation video scores only; freezes max-score-over-frames aggregation before test evaluation; and reports both frame and video metrics. It is a score-reporting CLI, not an ONNX inference harness.
+- No video dataset was downloaded or added. The source image model's MIT code/model license does not supply a provenance audit for all of its underlying training images; no attempt was made to retrain it on unverified material.
+## Frame-classifier training/evaluation update (2026-10-22)
+
+- No new vision checkpoint was trained or exported. The workspace contains no labeled real/fake video or frame dataset; the vision label CSV is header-only. The synthetic `assets/selftest/face.jpg` remains smoke-test-only.
+- The shipped CommunityForensics image model remains unchanged. Its source revision, asset hash, crop, resize, RGB normalization, tensor layout, and sigmoid output mapping are recorded in `MODEL_CARD.md` and regression-tested in `packages/vision-detector/tests/deepfake.test.ts`.
+- No frame-level or video-level metrics, threshold, compression robustness, or whole-video detection claim is available. The browser emits a per-frame synthetic-image signal with fixed confidence 0.4; the downstream reason cutoff is not calibrated.
+- For future labeled exports, use `python eval/vision/evaluate_frame_scores.py PATH_TO_SCORES.csv --dataset NAME --revision REVISION --license LICENSE`. The script requires train/validation/test labels and disjoint video, person, and source IDs; chooses a threshold on validation video scores only; freezes max-score-over-frames aggregation before test evaluation; and reports both frame and video metrics. It is a score-reporting CLI, not an ONNX inference harness.
+- No video dataset was downloaded or added. The source image model's MIT code/model license does not supply a provenance audit for all of its underlying training images; no attempt was made to retrain it on unverified material.

@@ -11,6 +11,8 @@
 - **Backend:** ONNX Runtime Web (WASM with fallback to CPU).
 - **Latency:** ~1.5 s median inference per 4-second audio window on browser WASM.
 - **Known limitations:** Trained on ASVspoof 2019 LA; sensitivity to modern diffusion-based voice clones and noisy real-call codecs requires domain calibration.
+- **Current project proxy:** 2,416 scored utterances from three ASVspoof 2021 LA eval shards (353 bona fide / 2,063 spoof); 62 speech-gate abstentions among 2,478 window-eligible files. At the unchanged interface threshold 0.5: balanced accuracy 89.8%, spoof recall 94.6%, bona fide FPR 15.0%, FNR 5.4%, ROC AUC 0.963, and PR average precision 0.992. No threshold was chosen on this evaluation subset. See `eval/audio/report.md` for coverage, confusion matrix, and limitations.
+- **Training status:** no training or fine-tuning was performed; the available 2021 LA rows are evaluation-only and the project label file is empty.
 
 ---
 

@@ -5,7 +5,7 @@
 
 ## Passed
 
-- `pnpm verify`: integration check, privacy source check, TypeScript typecheck, all 48 unit tests in 12 test files, and the extension production build.
+- `pnpm verify`: integration check, privacy source check, TypeScript typecheck, all 52 unit tests in 13 test files, and the extension production build.
 - `pnpm build:harness`: replay/self-test harness build.
 - `git diff --check`: no whitespace errors.
 - Browser self-test: all 20 checks passed using the real audio, vision, sync, challenge, and text modules. The run covered synthetic speech, silence, blank-frame handling, face landmarks, and frame-classifier inference.
@@ -13,7 +13,9 @@
 - The harness now previews the production overlay with simulated alert data. This confirms presentation and acknowledgement wiring only; the reasons are synthetic.
 - The rebuilt unpacked extension was reloaded in Chrome and its popup opened. It correctly shows Standby on a non-meeting page, keeps the start control disabled, and displays the advisory/privacy copy.
 - The synthetic face fixture was detected. Landmark latency was about 34 ms per frame in this run; the frame-classifier smoke score returned in about 1.4 seconds. The score is not an accuracy result.
-- Audio-only benchmark proxy: AASIST was evaluated at the project's 0.5 fake threshold on 2,416 scoreable ASVspoof 2021 LA `eval` utterances from three pinned partitions. Balanced accuracy was 89.8%, spoof recall 94.6%, bonafide false-positive rate 15.0%, and ROC AUC 0.963. Short clips and speech-gate rejections were counted as abstentions, not correct real predictions. Details, per-clip scores, and the reproducible evaluator are in `eval/audio/`.
+- Audio-only benchmark proxy: AASIST was evaluated at the project's 0.5 fake threshold on 2,416 scoreable ASVspoof 2021 LA `eval` utterances from three pinned partitions. Balanced accuracy was 89.8%, spoof recall 94.6%, bonafide false-positive rate 15.0%, false-negative rate 5.4%, ROC AUC 0.963, and PR average precision 0.992. Short clips and speech-gate rejections were counted as abstentions, not correct real predictions. The updated aggregate summary was recomputed from checked-in scores; the original Parquet-based inference pass was not rerun in this workspace.
+- Detector regression checks now cover the shipped AASIST metadata/window/output mapping, audio silence abstention, frame crop geometry, RGB normalization, and single-logit sigmoid mapping. `pnpm verify` passes after these changes.
+- Both `apps/extension/dist` and `apps/harness/dist` contain the bundled AASIST and CommunityForensics model assets; no model download is added to runtime.
 
 ## Still unverified
 
@@ -23,6 +25,8 @@
 - The benchmark subset is not the full ASVspoof dataset: it covers three of 24 partitions, and 15,976 of 18,454 eval utterances in those partitions were too short for the model's 4.0375-second window. Conditional metrics apply only to 2,416 scored utterances. The test-set EER threshold is diagnostic and must not be adopted as a deployment threshold.
 - No built-extension Network-panel inspection was completed. The source privacy check passed, but dependency behavior and runtime network traffic still need browser-level verification.
 - CPU/GPU performance on the intended demonstration laptop has not been benchmarked beyond the single browser smoke-test timing above.
+- For this model-training task, `pnpm build:harness` passed and the local `pnpm harness` server built successfully, but no new browser self-test was run. The computer-use browser session stopped before navigation because it could not verify Chrome's current URL. The earlier browser checks listed above are historical project validation, not a new result from this change.
+- No AASIST retraining or CommunityForensics fine-tuning was performed. The workspace has no suitable training data, no project-owned labeled call clips, and no ML training framework installed. See `training/README.md`.
 
 ## Demo readiness
 

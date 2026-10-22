@@ -42,7 +42,8 @@ Open `http://localhost:5173`, run the self-test, preview the simulated alert, or
 ## Evaluation and evidence
 
 - The text model's reported 99.73% accuracy is from a random holdout within an LLM-generated English email corpus. It is not a real-world performance estimate. A 20-message hand-authored smoke set yielded 85% binary accuracy (with `suspicious` counted as positive).
-- No project-owned, labeled real/fake voice or video clips are included. Audio/vision accuracy, sync thresholds, challenge success rates, and live-call latency therefore remain unmeasured for this project.
+- The AASIST audio model has a limited proxy result on 2,416 scored utterances from three ASVspoof 2021 LA eval shards (balanced accuracy 89.8%, spoof recall 94.6%, bona fide false-positive rate 15.0% at the unchanged provisional 0.5 threshold; 62 speech-gate abstentions among 2,478 window-eligible utterances). This benchmark result is not project call accuracy; see `eval/audio/report.md` for coverage and caveats.
+- No project-owned, labeled real/fake voice or video clips are included. Video classifier accuracy, sync thresholds, challenge success rates, and live-call accuracy/latency therefore remain unmeasured. See `training/README.md` for the no-training decision and reproduction commands.
 - See [evaluation reports](eval/), [model cards](packages/), [architecture](docs/ARCHITECTURE.md), [the demo guide](docs/demo-script.md), and the [security and bypass review](docs/security-review.md) for methods, limitations, and next steps.
 
 ## Privacy and permissions

@@ -82,6 +82,23 @@ def auc_rank(labels: np.ndarray, scores: np.ndarray) -> float:
     return float((ranks[labels == 1].sum() - positive * (positive + 1) / 2) / max(1, positive * negative))
 
 
+def average_precision(labels: np.ndarray, scores: np.ndarray) -> float:
+    """Stepwise area under the precision-recall curve (average precision)."""
+    positive = int(labels.sum())
+    if positive == 0:
+        return 0.0
+    order = np.argsort(-scores, kind="mergesort")
+    sorted_scores = scores[order]
+    sorted_labels = labels[order]
+    ends = np.r_[np.flatnonzero(np.diff(sorted_scores)) + 1, len(sorted_scores)]
+    cumulative_tp = np.cumsum(sorted_labels)[ends - 1]
+    cumulative_fp = ends - cumulative_tp
+    recall = cumulative_tp / positive
+    precision = cumulative_tp / np.maximum(1, cumulative_tp + cumulative_fp)
+    recall_before = np.r_[0.0, recall[:-1]]
+    return float(np.sum((recall - recall_before) * precision))
+
+
 def score_windows(waveform: np.ndarray, meta: dict[str, Any], session: Any, convert: Any) -> tuple[float, float, int]:
     window = int(meta["windowSamples"])
     hop = int(meta["hopSamples"])
@@ -165,10 +182,12 @@ def summarize(rows: list[dict[str, Any]], counts: Counter[str], shards: dict[int
             "spoof_precision": precision,
             "spoof_recall": tpr,
             "bonafide_false_positive_rate": fpr,
+            "false_negative_rate": fn / max(1, tp + fn),
             "spoof_recall_95ci_wilson": wilson(tp, tp + fn),
             "bonafide_fpr_95ci_wilson": wilson(fp, fp + tn),
             "confusion_matrix": {"tn": tn, "fp": fp, "fn": fn, "tp": tp},
             "roc_auc": auc_rank(labels, scores),
+            "pr_auc_average_precision": average_precision(labels, scores),
         },
         "diagnostic_eer_on_scored_clips": {
             "eer": eer,

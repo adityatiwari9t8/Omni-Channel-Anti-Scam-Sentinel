@@ -4,6 +4,7 @@ import { gateWindow } from "../src/gate";
 import { parseAudioModelMeta } from "../src/meta";
 import { scoreOutput } from "../src/score";
 import { AudioWindowing } from "../src/windowing";
+import shippedMetaJson from "../assets/meta.json";
 
 const meta = { id: "test", sampleRate: 16000 as const, windowSamples: 32000, hopSamples: 16000, inputName: "input", outputName: "output", outputKind: "sigmoid1" as const, fakeIndex: 0, features: "raw" as const, normalize: "none" as const, silenceRmsThreshold: 0.005, thresholdFake: 0.5, license: "test", source: "test" };
 const audioChunk = (value = 0.1) => new Float32Array(1600).fill(value);
@@ -13,6 +14,23 @@ describe("audio metadata", () => {
     expect(parseAudioModelMeta(meta)).toEqual(meta);
     expect(() => parseAudioModelMeta({ ...meta, sampleRate: 8000 })).toThrow("sampleRate");
     expect(() => parseAudioModelMeta({ ...meta, outputKind: "unknown" })).toThrow("outputKind");
+  });
+  it("locks the shipped AASIST window and tensor contract to its metadata", () => {
+    const shipped = parseAudioModelMeta(shippedMetaJson);
+    expect(shipped).toMatchObject({
+      sampleRate: 16000,
+      windowSamples: 64600,
+      hopSamples: 32300,
+      inputName: "wav",
+      outputName: "logits",
+      outputKind: "logits2",
+      fakeIndex: 0,
+      features: "raw",
+      normalize: "none",
+      thresholdFake: 0.5,
+    });
+    expect(scoreOutput([2, 0], shipped).scoreFake).toBeGreaterThan(0.8);
+    expect(scoreOutput([0, 2], shipped).scoreFake).toBeLessThan(0.2);
   });
 });
 

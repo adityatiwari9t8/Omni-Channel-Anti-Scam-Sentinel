@@ -10,6 +10,14 @@
 |---|---|---|---|---|
 | AASIST | `SpeechAntiSpoofingBenchmarks/AASIST`, ONNX opset 17 | MIT; license and source card included beside model | Browser WASM loads; 1.534 s median inference per window in harness | Ship as experimental risk signal; optimize and calibrate before demo claims |
 
+## Audio model-training task update (2026-10-22)
+
+- No new checkpoint was trained or exported. The only labeled audio available in the checkout is a saved-score proxy on three ASVspoof 2021 LA evaluation shards; the source audio shards are not present in the workspace. The official benchmark describes the 2021 databases as ODC-By and the task data here is eval-only. It is not valid training data for this experiment.
+- The current proxy's metric recomputation is `python eval/audio/summarize_asvspoof_proxy.py`; it reads the checked-in CSV and provenance report and does not rerun ONNX inference. Exact score command with downloaded shards is in `eval/audio/report.md`.
+- At the shipped 0.5 threshold, the saved proxy scores yield 2,416 conditional predictions (353 bona fide / 2,063 spoof), 62 speech-gate abstentions among 2,478 window-eligible utterances, balanced accuracy 89.8%, spoof recall 94.6%, bona fide FPR 15.0%, FNR 5.4%, ROC AUC 0.963, and PR average precision 0.992. EER 9.1% at 0.879 is test-subset diagnostic only. No threshold or hyperparameter was chosen from this eval set.
+- ASVspoof 2019 training/development data is not present. Its registration conditions and the rights needed to redistribute a derived browser model were not reviewed for this run. No raw data, checkpoints, or training dependencies were added.
+- No labeled project-owned real/fake call audio was supplied; the live-call coverage and accuracy remain unknown.
+
 ## Text measurements
 
 - Synthetic-corpus stratified holdout (seed 17, 2,996 train / 750 test): accuracy 99.73%, phishing precision 99.80%, recall 99.80%, FPR 0.39%, ROC AUC 0.99999. These are random-split metrics on LLM-generated text, not real-world performance.
